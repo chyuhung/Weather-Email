@@ -33,6 +33,10 @@ def main():
     print(f"✅ 天气获取成功: {weather['city']}")
     live = weather["live"]
 
+    if live is None:
+        print("❌ 天气实况数据为空，请检查城市配置是否正确")
+        return
+
     # ========== 根据 config 中的 WEATHER_FIELDS 动态生成邮件内容 ==========
     content = "【今日天气播报】\n"
     content += "------------------------\n"

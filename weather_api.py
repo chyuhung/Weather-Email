@@ -1,8 +1,44 @@
 # weather_api.py 修复版 + 调试模式
 import requests
+import re
 
 class WeatherAPI:
     _API_URL = "https://restapi.amap.com/v3/weather/weatherInfo"
+    _GEO_URL = "https://restapi.amap.com/v3/geocode/regeo"
+
+    @classmethod
+    def _is_latlng(cls, location):
+        """判断是否为经纬度格式（如 106.50,29.73）"""
+        pattern = r'^-?\d+\.?\d*,-?\d+\.?\d*$'
+        return bool(re.match(pattern, location))
+
+    @classmethod
+    def _latlng_to_adcode(cls, location, amap_key):
+        """经纬度转 adcode"""
+        try:
+            resp = requests.get(
+                cls._GEO_URL,
+                params={
+                    "key": amap_key,
+                    "location": location,
+                    "extensions": "base",
+                    "output": "JSON"
+                },
+                timeout=10
+            )
+            data = resp.json()
+            if data.get("status") == "1" and data.get("regeocode"):
+                adcode = data["regeocode"].get("addressComponent", {}).get("adcode")
+                city = data["regeocode"].get("addressComponent", {}).get("city")
+                district = data["regeocode"].get("addressComponent", {}).get("district")
+                print(f"【调试】经纬度 {location} 解析为: {district or city} (adcode: {adcode})")
+                return adcode
+            else:
+                print(f"【调试】逆地理编码失败: {data.get('info', '未知错误')}")
+                return None
+        except Exception as e:
+            print(f"【调试】逆地理编码异常: {e}")
+            return None
 
     @classmethod
     def get_weather(cls, city_or_location, amap_key, extensions="base"):
@@ -13,7 +49,19 @@ class WeatherAPI:
             "gzip": "n"
         }
 
-        params["city"] = city_or_location  # 高德支持直接传经纬度/adcode
+        # 如果是经纬度，先转成 adcode
+        city_code = city_or_location
+        if cls._is_latlng(city_or_location):
+            adcode = cls._latlng_to_adcode(city_or_location, amap_key)
+            if adcode:
+                city_code = adcode
+            else:
+                return {
+                    "success": False,
+                    "error": "经纬度解析失败，无法获取对应城市信息"
+                }
+
+        params["city"] = city_code
 
         try:
             resp = requests.get(cls._API_URL, params=params, timeout=15)
