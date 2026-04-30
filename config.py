@@ -6,7 +6,7 @@
 # ========== 天气数据源选择 ==========
 # gaode = 高德天气（支持城市名/adcode/经纬度）
 # caiyun = 彩云天气（仅支持经纬度，数据更丰富）
-WEATHER_SOURCE = "gaode"  # 可选: "gaode" 或 "caiyun"
+WEATHER_SOURCE = "caiyun"  # 可选: "gaode" 或 "caiyun"
 
 # ========== 高德天气配置 ==========
 # 高德 API Key（从 https://console.amap.com 获取）
