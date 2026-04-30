@@ -165,7 +165,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     elif any_rain:
         rain_hint = f"{target_label}{'、'.join(rain_slots)}有雨，请带伞"
     else:
-        rain_hint = f"{target_label}无需带伞"
+        rain_hint = ""
 
     # ── 着装建议 ────────────────────────────────────────────────────────────
     temps = []
@@ -203,7 +203,44 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     clothing_brief, clothing_detail = _clothing_advice(temp_min, temp_max)
 
     # ── 邮件主题 ────────────────────────────────────────────────────────────
-    subject = f"{temp_min:.0f}~{temp_max:.0f}℃ · {rain_hint}"
+    # 主天气 emoji：取目标日主要天气的图标
+    primary_sky = ""
+    for key in ["morning", "afternoon", "night"]:
+        item = slots.get(key)
+        if item:
+            primary_sky = item.get("skycon", item.get("weather", ""))
+            break
+    if not primary_sky and live:
+        primary_sky = live.get("skycon", live.get("weather", ""))
+    weather_emoji = _sky_icon(primary_sky) if primary_sky else ""
+
+    # 极端天气提示标签
+    alert_tags = []
+    if any_rain or need_umbrella_morning:
+        alert_tags.append("🌂带伞")
+    if temp_max >= 35:
+        alert_tags.append("🔥防暑")
+    elif temp_max >= 30:
+        alert_tags.append("☀️防晒")
+    if temp_min <= 0:
+        alert_tags.append("🥶防寒")
+    # 大风检测：任一时段风力 ≥5 级
+    for key in ["morning", "afternoon", "night"]:
+        item = slots.get(key)
+        if item:
+            try:
+                wp = float(item.get("wind_power", 0))
+                if wp >= 5:
+                    alert_tags.append("💨大风")
+                    break
+            except (ValueError, TypeError):
+                pass
+
+    alert_str = " ".join(alert_tags)
+    subject_parts = [f"{weather_emoji}{temp_min:.0f}~{temp_max:.0f}℃"]
+    if alert_str:
+        subject_parts.append(alert_str)
+    subject = " · ".join(subject_parts)
 
     # ── HTML 正文 ───────────────────────────────────────────────────────────
     accent_color = "#e74c3c" if any_rain else "#2c98f0"
@@ -266,6 +303,8 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
     if weather_summary and rain_hint:
         summary_text = f"💡 {weather_summary}，{rain_hint}"
+    elif weather_summary:
+        summary_text = f"💡 {weather_summary}"
     elif rain_hint:
         summary_text = f"💡 {rain_hint}"
     else:
