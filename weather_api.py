@@ -6,7 +6,8 @@ from datetime import datetime
 # ========== 彩云天气 API ==========
 class CaiyunAPI:
     _API_URL = "https://api.caiyunapp.com/v2.6/{token}/{lng},{lat}/weather"
-    
+    _GEO_URL = "https://restapi.amap.com/v3/geocode/regeo"   # 高德逆地理
+
     # 天气现象映射
     SKYCON_MAP = {
         "CLEAR_DAY": "晴",
@@ -66,20 +67,50 @@ class CaiyunAPI:
         return "12+"
     
     @classmethod
-    def get_weather(cls, location, token, extensions="base"):
+    def _latlng_to_name(cls, location, gaode_key):
+        """用高德逆地理编码将经纬度转为省市区名称"""
+        try:
+            resp = requests.get(
+                cls._GEO_URL,
+                params={"key": gaode_key, "location": location, "extensions": "base"},
+                timeout=10
+            )
+            data = resp.json()
+            if data.get("status") == "1" and data.get("regeocode"):
+                comp = data["regeocode"].get("addressComponent", {})
+                province = comp.get("province", "")
+                city = comp.get("city")
+                district = comp.get("district", "")
+                # 城市可能为空（如直辖市），取 province
+                city_name = (city[0] if city else province) if isinstance(city, list) else (city or province)
+                return f"{province} {city_name} {district}".strip().replace("  ", " ")
+            return None
+        except Exception as e:
+            print(f"【调试】逆地理编码失败: {e}")
+            return None
+
+    @classmethod
+    def get_weather(cls, location, token, gaode_key=None, extensions="base"):
         """
         获取彩云天气
         :param location: 经纬度字符串 "lng,lat"
         :param token: 彩云 API Token
+        :param gaode_key: 高德 Key（用于逆地理编码显示地名）
         :param extensions: base=实况, all=实况+预报
         """
         try:
-            # 解析经纬度
             parts = location.split(",")
             if len(parts) != 2:
                 return {"success": False, "error": "经纬度格式错误，应为 lng,lat"}
             lng, lat = parts[0].strip(), parts[1].strip()
-            
+
+            # 先用高德逆地理获取地名
+            city_name = None
+            if gaode_key:
+                city_name = cls._latlng_to_name(location, gaode_key)
+            if not city_name:
+                city_name = f"{lat}°N, {lng}°E"
+
             # 构建请求
             url = cls._API_URL.format(token=token, lng=lng, lat=lat)
             params = {
@@ -87,42 +118,42 @@ class CaiyunAPI:
                 "dailysteps": 3 if extensions == "all" else 1,
                 "hourlysteps": 24
             }
-            
+
             resp = requests.get(url, params=params, timeout=15)
             data = resp.json()
-            
+
             # 调试输出
             print("\n【调试】彩云API返回状态:", data.get("status"))
             print("=" * 50)
-            
+
             if data.get("status") != "ok":
                 return {
                     "success": False,
                     "error": f"彩云API错误: {data.get('error', '未知错误')}"
                 }
-            
+
             result = data.get("result", {})
             realtime = result.get("realtime", {})
-            
+
             # 构建返回结构（与高德格式兼容）
             weather_data = {
                 "success": True,
-                "city": f"{lat},{lng}",  # 彩云无城市名，用经纬度
+                "city": city_name,
                 "live": None,
                 "forecast": None,
                 "error": None,
                 "source": "caiyun"
             }
-            
+
             # 解析实况天气
             if realtime:
                 skycon = realtime.get("skycon", "UNKNOWN")
                 wind = realtime.get("wind", {})
                 wind_dir = wind.get("direction")
                 wind_speed = wind.get("speed", 0)
-                
+
                 weather_data["live"] = {
-                    "city": f"{lat},{lng}",
+                    "city": city_name,
                     "weather": cls.SKYCON_MAP.get(skycon, skycon),
                     "temperature": str(realtime.get("temperature", "N/A")),
                     "apparent_temperature": str(realtime.get("apparent_temperature", "N/A")),
@@ -151,7 +182,7 @@ class CaiyunAPI:
                 daily = result.get("daily", {})
                 if daily:
                     weather_data["forecast"] = {
-                        "city": f"{lat},{lng}",
+                        "city": city_name,
                         "casts": []
                     }
                     for i, cast in enumerate(daily.get("temperature", [])):

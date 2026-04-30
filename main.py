@@ -29,7 +29,8 @@ def main():
         if not CAIYUN_TOKEN:
             print("❌ 彩云 API Token 缺失！请设置环境变量 CAIYUN_TOKEN")
             return
-        weather = CaiyunAPI.get_weather(LOCATION, CAIYUN_TOKEN, extensions=WEATHER_TYPE)
+        # 同时传高德 Key 用于经纬度→地名解析
+        weather = CaiyunAPI.get_weather(LOCATION, CAIYUN_TOKEN, gaode_key=GAODE_KEY, extensions=WEATHER_TYPE)
     else:  # 默认使用高德
         if not GAODE_KEY:
             print("❌ 高德 API Key 缺失！请设置环境变量 GAODE_KEY")
