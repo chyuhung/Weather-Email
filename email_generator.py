@@ -251,8 +251,24 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     pressure = live.get("pressure", "") if mode == "morning" else ""
     cloudrate = live.get("cloudrate", "") if mode == "morning" else ""
 
-    # 预警提示
-    keypoint = weather.get("forecast_keypoint", "") or ""
+    # 预警提示：基于分段数据自生成，确保早间只谈今日、晚间只谈明日
+    weather_parts = []
+    for key, label in [("morning", "上午"), ("afternoon", "下午"), ("night", "晚间")]:
+        item = slots.get(key)
+        if item:
+            w = item.get("weather", item.get("skycon", ""))
+            if w:
+                weather_parts.append(f"{label}{w}")
+    if weather_parts:
+        if len(set(weather_parts)) == 1:
+            keypoint = f"{target_label}全天{weather_parts[0].split('，')[0].removeprefix('上午').removeprefix('下午').removeprefix('晚间')}"
+        else:
+            keypoint = f"{target_label}{'，'.join(weather_parts)}"
+        # 如果有雨段，高亮
+        if any_rain:
+            keypoint += "，注意防雨"
+    else:
+        keypoint = ""
 
     # ── 构建 HTML ───────────────────────────────────────────────────────────
 
