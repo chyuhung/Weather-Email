@@ -19,9 +19,10 @@ def main():
     CAIYUN_TOKEN = os.getenv("CAIYUN_TOKEN")
     EMAIL_SENDER = os.getenv("EMAIL_SENDER")
     EMAIL_AUTH_CODE = os.getenv("EMAIL_AUTH_CODE")
-    EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+    # 支持 EMAIL_RECEIVERS（逗号分隔字符串）或 EMAIL_RECEIVER（单个）
+    EMAIL_RECEIVERS = os.getenv("EMAIL_RECEIVERS") or os.getenv("EMAIL_RECEIVER") or ""
 
-    if not all([EMAIL_SENDER, EMAIL_AUTH_CODE, EMAIL_RECEIVER]):
+    if not all([EMAIL_SENDER, EMAIL_AUTH_CODE, EMAIL_RECEIVERS]):
         print("❌ 邮箱环境变量缺失！")
         return
 
@@ -61,7 +62,7 @@ def main():
     ok = send_email(
         sender=EMAIL_SENDER,
         auth_code=EMAIL_AUTH_CODE,
-        receiver=EMAIL_RECEIVER,
+        receiver=EMAIL_RECEIVERS,
         subject=subject,
         content=html_body,
         smtp_server=SMTP_SERVER,

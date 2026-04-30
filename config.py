@@ -54,3 +54,9 @@ WEATHER_FIELDS = [
 SENDER_NAME = "Weather-Email"
 SMTP_SERVER = "smtp.exmail.qq.com"
 SMTP_PORT = 587
+
+# ========== 多收件人配置 ==========
+# 支持多人，用逗号分隔，如："a@qq.com, b@qq.com"
+# EMAIL_RECEIVER = "single@qq.com"              # 单收件人写法
+# EMAIL_RECEIVERS = ["a@qq.com", "b@qq.com"]  # 多收件人写法（二选一）
+EMAIL_RECEIVERS = []  # 默认空，请从 .env 环境变量读取
