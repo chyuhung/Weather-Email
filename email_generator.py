@@ -113,16 +113,16 @@ def generate_html(weather: dict) -> tuple[str, str]:
 
     if is_rain_now and will_rain_tomorrow:
         umbrella_emoji = "🌂"
-        umbrella_hint = "全天有雨，出门记得带伞！"
+        umbrella_hint = "全天有雨，请带伞"
     elif is_rain_now:
         umbrella_emoji = "🌂"
-        umbrella_hint = "现在有雨，出门带伞！"
+        umbrella_hint = "现在有雨，请带伞"
     elif will_rain_tomorrow:
         umbrella_emoji = "⏰"
-        umbrella_hint = "明天有雨，出行提前备伞！"
+        umbrella_hint = "明天有雨，请带伞"
     else:
-        umbrella_emoji = "✅"
-        umbrella_hint = "未来天气适宜出行，暂不需要带伞"
+        umbrella_emoji = "☀️"
+        umbrella_hint = "无需带伞"
 
     # ── 邮件主题（位置固定在家，不写地名） ──────────────────────────────────────
     temp_now = live.get("temperature", "?")
