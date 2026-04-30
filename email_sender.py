@@ -1,8 +1,14 @@
 import smtplib
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-def send_email(sender, auth_code, receiver, subject, content, smtp_server, smtp_port, sender_name=None):
-    msg = MIMEText(content, "plain", "utf-8")
+def send_email(sender, auth_code, receiver, subject, content, smtp_server, smtp_port, sender_name=None, is_html=False):
+    if is_html:
+        msg = MIMEMultipart("alternative")
+        msg.attach(MIMEText(content, "html", "utf-8"))
+    else:
+        msg = MIMEText(content, "plain", "utf-8")
+
     from_header = sender if not sender_name else f"{sender_name} <{sender}>"
     msg["From"] = from_header
     msg["To"] = receiver

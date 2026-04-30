@@ -177,26 +177,50 @@ class CaiyunAPI:
                 # 天气关键点
                 weather_data["forecast_keypoint"] = result.get("forecast_keypoint", "")
             
-            # 解析预报
+            # ── 解析小时级预报（用于明日分段天气）─────────────────────────
+            hourly_forecast = []
             if extensions == "all":
-                daily = result.get("daily", {})
-                if daily:
+                hourly_data = result.get("hourly", {})
+                for item in hourly_data.get("temperature", []):
+                    dt_str = item.get("datetime", "")
+                    skycon_vals = hourly_data.get("skycon", [])
+                    sky = next(
+                        (s.get("value") for s in skycon_vals if s.get("datetime") == dt_str),
+                        "CLEAR_DAY"
+                    )
+                    wind_vals = hourly_data.get("wind", [])
+                    w = next((w for w in wind_vals if w.get("datetime") == dt_str), {})
+                    hourly_forecast.append({
+                        "datetime": dt_str,
+                        "temperature": item.get("value", "N/A"),
+                        "weather": cls.SKYCON_MAP.get(sky, sky),
+                        "skycon": sky,
+                        "wind_direction": cls._get_wind_direction(w.get("direction")),
+                        "wind_power": cls._get_wind_power(w.get("speed", 0)),
+                        "humidity": round(w.get("humidity", 0) * 100) if w.get("humidity") is not None else "N/A",
+                    })
+
+                # ── 解析每日预报（最高/最低温）───────────────────────────────
+                daily_data = result.get("daily", {})
+                if daily_data:
                     weather_data["forecast"] = {
                         "city": city_name,
                         "casts": []
                     }
-                    for i, cast in enumerate(daily.get("temperature", [])):
-                        if i >= 3:  # 最多3天
+                    for i, cast in enumerate(daily_data.get("temperature", [])):
+                        if i >= 3:
                             break
+                        skycons = daily_data.get("skycon", [])
+                        day_sky = skycons[i].get("value", "") if i < len(skycons) else ""
                         weather_data["forecast"]["casts"].append({
                             "date": cast.get("date", ""),
                             "day_temp": str(cast.get("max", "N/A")),
                             "night_temp": str(cast.get("min", "N/A")),
-                            "day_weather": cls.SKYCON_MAP.get(
-                                daily.get("skycon", [{}])[i].get("value", "") if i < len(daily.get("skycon", [])) else "",
-                                "未知"
-                            ),
+                            "day_weather": cls.SKYCON_MAP.get(day_sky, day_sky),
+                            "skycon": day_sky,
                         })
+
+            weather_data["hourly_forecast"] = hourly_forecast
             
             return weather_data
             
