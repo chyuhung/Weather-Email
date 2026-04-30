@@ -137,9 +137,11 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     if mode == "morning":
         target_date = today_str
         target_label = "今天"
+        mode_title = "今日天气预报"
     else:
         target_date = tomorrow_str
         target_label = "明天"
+        mode_title = "明日天气预报"
 
     # ── 提取分段数据 ────────────────────────────────────────────────────────
     hourly = weather.get("hourly_forecast", [])
@@ -360,7 +362,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         # 晚间：明日全天概览
         now_card = f"""
         <div class="card hero">
-            <div class="hero-location">📍 {city} · 明日天气</div>
+            <div class="hero-location">📍 {city}</div>
             <div class="hero-main">
                 <span class="hero-icon">{tmr_icon}</span>
                 <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
@@ -389,8 +391,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     # keypoint_html 已合并到 summary_text，不再单独显示
 
     # ── 组装完整 HTML ───────────────────────────────────────────────────────
-    mode_title = "今日天气预报" if mode == "morning" else "明日天气预报"
-
+    
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -413,8 +414,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
   /* 卡片通用 */
   .section {{ padding: 16px 20px 8px; }}
-  .section-title {{ font-size: 12px; color: #999; text-transform: uppercase;
-                    letter-spacing: 1.5px; margin-bottom: 10px; font-weight: 600; }}
   .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr);
                 gap: 8px; }}
 
@@ -480,12 +479,11 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   <!-- 一句话总结 -->
   <div class="hint-bar">
     <div class="hint-text">{summary_text}</div>
-    <div class="hint-sub">{city}{(' · ' + report_time) if mode == 'morning' and report_time else ''}</div>
+    <div class="hint-sub">{report_time if mode == 'morning' and report_time else ''}</div>
   </div>
 
   <!-- {target_label}分段天气 -->
   <div class="section">
-    <div class="section-title">{target_label}天气</div>
   </div>
   <div class="section" style="padding-top:0">
     <div class="card-grid">
