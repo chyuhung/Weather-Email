@@ -161,14 +161,11 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     any_rain = len(rain_slots) > 0
 
     if need_umbrella_morning:
-        umbrella_emoji = "🌂"
-        umbrella_hint = f"{target_label}上午有雨，出门请带伞"
+        rain_hint = f"{target_label}上午有雨，出门请带伞"
     elif any_rain:
-        umbrella_emoji = "🌂"
-        umbrella_hint = f"{target_label}{'、'.join(rain_slots)}有雨，请带伞"
+        rain_hint = f"{target_label}{'、'.join(rain_slots)}有雨，请带伞"
     else:
-        umbrella_emoji = "☀️"
-        umbrella_hint = f"{target_label}无需带伞"
+        rain_hint = f"{target_label}无需带伞"
 
     # ── 着装建议 ────────────────────────────────────────────────────────────
     temps = []
@@ -206,7 +203,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     clothing_brief, clothing_detail = _clothing_advice(temp_min, temp_max)
 
     # ── 邮件主题 ────────────────────────────────────────────────────────────
-    subject = f"{umbrella_emoji} {temp_min:.0f}~{temp_max:.0f}℃ · {umbrella_hint}"
+    subject = f"{temp_min:.0f}~{temp_max:.0f}℃ · {rain_hint}"
 
     # ── HTML 正文 ───────────────────────────────────────────────────────────
     accent_color = "#e74c3c" if any_rain else "#2c98f0"
@@ -251,7 +248,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     pressure = live.get("pressure", "") if mode == "morning" else ""
     cloudrate = live.get("cloudrate", "") if mode == "morning" else ""
 
-    # 预警提示：基于分段数据自生成，确保早间只谈今日、晚间只谈明日
+    # ── 一句话总结（天气概览 + 带伞）──────────────────────────────────────────
     weather_parts = []
     for key, label in [("morning", "上午"), ("afternoon", "下午"), ("night", "晚间")]:
         item = slots.get(key)
@@ -261,14 +258,18 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 weather_parts.append(f"{label}{w}")
     if weather_parts:
         if len(set(weather_parts)) == 1:
-            keypoint = f"{target_label}全天{weather_parts[0].split('，')[0].removeprefix('上午').removeprefix('下午').removeprefix('晚间')}"
+            weather_summary = f"{target_label}全天{weather_parts[0].split('，')[0].removeprefix('上午').removeprefix('下午').removeprefix('晚间')}"
         else:
-            keypoint = f"{target_label}{'，'.join(weather_parts)}"
-        # 如果有雨段，高亮
-        if any_rain:
-            keypoint += "，注意防雨"
+            weather_summary = f"{target_label}{'，'.join(weather_parts)}"
     else:
-        keypoint = ""
+        weather_summary = ""
+
+    if weather_summary and rain_hint:
+        summary_text = f"💡 {weather_summary}，{rain_hint}"
+    elif rain_hint:
+        summary_text = f"💡 {rain_hint}"
+    else:
+        summary_text = ""
 
     # ── 构建 HTML ───────────────────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         extras_html = f"""
         <div class="extras">{" &nbsp;|&nbsp; ".join(extras)}</div>"""
 
-    keypoint_html = f'<div class="keypoint">💡 {keypoint}</div>' if keypoint else ""
+    # keypoint_html 已合并到 summary_text，不再单独显示
 
     # ── 组装完整 HTML ───────────────────────────────────────────────────────
     mode_title = "今日天气预报" if mode == "morning" else "明日天气预报"
@@ -435,15 +436,11 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     <span class="topbar-date">{target_date if mode == 'evening' else now.strftime('%Y-%m-%d')}</span>
   </div>
 
-  <!-- {'此刻天气' if mode == 'morning' else '明日概览'} -->
-  <div class="section">
-    <div class="section-title">{'此刻天气' if mode == 'morning' else '明日概览'}</div>
-  </div>
   {now_card}
 
-  <!-- 带伞提示 -->
+  <!-- 一句话总结 -->
   <div class="hint-bar">
-    <div class="hint-text">{umbrella_emoji} {umbrella_hint}</div>
+    <div class="hint-text">{summary_text}</div>
     <div class="hint-sub">{city}{(' · ' + report_time) if mode == 'morning' and report_time else ''}</div>
   </div>
 
@@ -465,7 +462,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     <div class="clothing-detail">{clothing_detail}（{temp_min:.0f}~{temp_max:.0f}℃）</div>
   </div>
 
-  {keypoint_html}
+
   {extras_html}
 
   <!-- 底部 -->
