@@ -345,29 +345,26 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     if mode == "morning":
         now_card = f"""
         <div class="card hero">
-            <div class="hero-location">📍 {city}</div>
             <div class="hero-main">
                 <span class="hero-icon">{icon_now}</span>
                 <span class="hero-temp">{temp_now_str}°C</span>
             </div>
-            <div class="hero-weather">{weather_now} {'<span class="rain-badge">🌂记得带伞</span>' if _is_rain(weather_now) else ''}</div>
+            <div class="hero-weather">{weather_now} {'<span class="rain-badge"></span>' if _is_rain(weather_now) else ''}</div>
             {'<div class="hero-feels">体感 ' + feels_like + '°C</div>' if feels_like not in ("", "N/A", None, "?") else ''}
             <div class="hero-meta">
                 <span>💧 {humidity_now}%</span>
                 <span>🍃 {wind_dir_now} {wind_pow_now}级</span>
-                <span>🕐 {report_time}</span>
-            </div>
+                </div>
         </div>"""
     else:
         # 晚间：明日全天概览
         now_card = f"""
         <div class="card hero">
-            <div class="hero-location">📍 {city}</div>
             <div class="hero-main">
                 <span class="hero-icon">{tmr_icon}</span>
                 <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
             </div>
-            <div class="hero-weather">{tmr_weather} {'<span class="rain-badge">🌂明日有雨</span>' if _is_rain(tmr_skycon) or any_rain else ''}</div>
+            <div class="hero-weather">{tmr_weather} {'<span class="rain-badge"></span>' if _is_rain(tmr_skycon) or any_rain else ''}</div>
         </div>"""
 
     # 次要信息区
@@ -418,9 +415,8 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 gap: 8px; }}
 
   /* 当前实况（hero） */
-  .card.hero {{ background: {accent_bg}; border-radius: 12px; padding: 16px 18px;
-                margin: 16px 20px 4px; }}
-  .hero-location {{ font-size: 12px; color: #888; margin-bottom: 4px; }}
+  .card.hero {{ background: {accent_bg}; border-radius: 12px 12px 0 0;
+                padding: 18px 20px; margin: 14px 20px 0; }}
   .hero-main {{ display: flex; align-items: flex-end; gap: 8px; margin-bottom: 4px; }}
   .hero-icon {{ font-size: 52px; line-height: 1; }}
   .hero-temp {{ font-size: 48px; font-weight: 700; color: #1a1a1a; line-height: 1; }}
@@ -445,9 +441,8 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
   /* 重要提示 */
   .hint-bar {{ background: {accent_bg}; border-left: 4px solid {accent_color};
-               margin: 12px 20px; padding: 10px 14px; border-radius: 0 8px 8px 0; }}
+             margin: 0 20px; padding: 10px 14px; border-radius: 0 0 8px 8px; }}
   .hint-text {{ font-size: 14px; color: #333; }}
-  .hint-sub  {{ font-size: 12px; color: #888; margin-top: 2px; }}
 
   /* 着装建议 */
   .clothing-bar {{ background: #f0f9eb; border-left: 4px solid #67c23a;
@@ -458,9 +453,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   /* 次要信息 */
   .extras {{ padding: 8px 20px 16px; display: flex; flex-wrap: wrap;
              gap: 6px 16px; font-size: 12px; color: #888; }}
-  .keypoint {{ background: #fffbe6; border-left: 3px solid #f5a623;
-               margin: 0 20px 12px; padding: 8px 12px; border-radius: 0 6px 6px 0;
-               font-size: 13px; color: #7a5a00; }}
 
   /* 底部 */
   .footer {{ text-align: center; padding: 14px; font-size: 11px; color: #bbb; }}
@@ -483,12 +475,10 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
   <!-- {target_label}分段天气 -->
   <div class="section">
-  </div>
-  <div class="section" style="padding-top:0">
     <div class="card-grid">
-      {_slot_html(slots.get("morning"), '上午 6~11', mode == "morning")}
-      {_slot_html(slots.get("afternoon"), '下午 12~17')}
-      {_slot_html(slots.get("night"), '晚间 18~23')}
+      {_slot_html(slots.get("morning"), '上午', mode == "morning")}
+      {_slot_html(slots.get("afternoon"), '下午')}
+      {_slot_html(slots.get("night"), '晚间')}
     </div>
   </div>
 
