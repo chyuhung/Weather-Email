@@ -9,38 +9,75 @@ from datetime import datetime, timedelta
 
 # ── 天气图标（emoji） ──────────────────────────────────────────────────────────
 def _sky_icon(skycon: str) -> str:
+    if not skycon:
+        return "🌤️"
+    # 标准化输入
+    normalized = skycon.upper().replace("（", "(").replace("）", ")").replace(" ", "")
+
     icon_map = {
         "CLEAR_DAY": "☀️", "CLEAR_NIGHT": "🌙",
         "PARTLY_CLOUDY_DAY": "⛅", "PARTLY_CLOUDY_NIGHT": "⛅",
-        "CLOUDY": "☁️", "LIGHT_RAIN": "🌦️", "MODERATE_RAIN": "🌧️",
-        "HEAVY_RAIN": "🌧️", "STORM_RAIN": "⛈️",
-        "FOG": "🌫️", "LIGHT_HAZE": "😷", "MODERATE_HAZE": "😷",
-        "HEAVY_HAZE": "😷", "LIGHT_SNOW": "🌨️", "MODERATE_SNOW": "❄️",
-        "HEAVY_SNOW": "❄️", "STORM_SNOW": "❄️",
+        "CLOUDY": "☁️",
+        "LIGHT_RAIN": "🌦️", "MODERATE_RAIN": "🌧️", "HEAVY_RAIN": "🌧️", "STORM_RAIN": "⛈️",
+        "DRIZZLE": "🌦️", "SHOWERS": "🌦️",
+        "THUNDERSTORM": "⛈️",
+        "SLEET": "🌨️", "HAIL": "🌨️",
+        "FOG": "🌫️",
+        "LIGHT_HAZE": "😷", "MODERATE_HAZE": "😷", "HEAVY_HAZE": "😷",
+        "LIGHT_SNOW": "🌨️", "MODERATE_SNOW": "❄️", "HEAVY_SNOW": "❄️", "STORM_SNOW": "❄️",
         "DUST": "🌿", "SAND": "🌿", "WIND": "💨",
     }
-    # 高德天气直接传文字兜底
-    if skycon not in icon_map and len(skycon) > 10:
-        skycon = skycon.upper()
-    if skycon not in icon_map:
-        # 高德晴/雨等中文
-        cjk = {"晴": "☀️", "多云": "⛅", "阴": "☁️", "小雨": "🌦️",
-               "中雨": "🌧️", "大雨": "🌧️", "暴雨": "⛈️",
-               "雷阵雨": "⛈️", "雾": "🌫️", "霾": "😷",
-               "沙尘": "🌿", "扬沙": "🌿", "雨夹雪": "🌨️",
-               "小雪": "🌨️", "中雪": "❄️", "大雪": "❄️"}
-        for k, v in cjk.items():
-            if k in skycon:
-                return v
-        return "🌤️"
-    return icon_map.get(skycon, "🌤️")
+
+    # 精确匹配
+    if skycon in icon_map:
+        return icon_map[skycon]
+    if normalized in icon_map:
+        return icon_map[normalized]
+
+    # 高德中文天气文字兜底
+    cjk = {
+        "晴": "☀️", "多云": "⛅", "阴": "☁️",
+        "小雨": "🌦️", "中雨": "🌧️", "大雨": "🌧️", "暴雨": "⛈️",
+        "雷阵雨": "⛈️", "阵雨": "🌦️", "雷雨": "⛈️",
+        "雾": "🌫️", "霾": "😷",
+        "沙尘": "🌿", "扬沙": "🌿",
+        "雨夹雪": "🌨️", "小雪": "🌨️", "中雪": "❄️", "大雪": "❄️",
+        "冰雹": "🌨️",
+    }
+    for k, v in cjk.items():
+        if k in skycon:
+            return v
+    return "🌤️"
 
 
 def _is_rain(skycon: str) -> bool:
-    """判断是否需要带伞（雨、雪、雨夹雪）"""
-    rain_keys = ["RAIN", "STORM", "雪", "雨夹雪", "雨"]
-    s = skycon.upper()
-    return any(k.upper() in s for k in rain_keys)
+    """判断是否需要带伞（雨系、雪系、雨夹雪）。晴/霾/雾/沙尘等返回 False。"""
+    if not skycon:
+        return False
+    s = skycon.upper().replace("（", "(").replace("）", ")").replace(" ", "")
+
+    # 雨/雷暴相关关键词（精确集合，避免 CLEAR_RAIN / PARTLY_CLOUDY 等误匹配）
+    RAIN_KEYWORDS = {
+        # 彩云 skycon
+        "RAIN", "DRIZZLE", "SHOWERS", "THUNDERSTORM", "STORM",
+        "SLEET", "HAIL", "HEAVY_RAIN", "MODERATE_RAIN", "LIGHT_RAIN",
+        "STORM_RAIN",
+        # 雪系
+        "SNOW", "HEAVY_SNOW", "MODERATE_SNOW", "LIGHT_SNOW", "STORM_SNOW",
+        # 高德中文天气文字
+        "雨", "雪", "雨夹雪", "雷阵雨", "阵雨", "雷雨",
+    }
+    # 晴/霾/雾/沙尘/风 → 不带伞
+    EXCLUDE = {"CLEAR", "HAZE", "FOG", "DUST", "SAND", "WIND", "CLOUDY",
+               "晴", "霾", "雾", "沙尘", "阴"}
+
+    # 必须包含雨/雪关键词，且不能是纯霾/晴/阴等
+    has_rain = any(k in s for k in RAIN_KEYWORDS)
+    has_exclude = any(k in s for k in EXCLUDE)
+    # CLOUDY/阴 如果前面没有雨雪词也不算
+    if has_exclude and not has_rain:
+        return False
+    return has_rain
 
 
 # ── 着装建议 ──────────────────────────────────────────────────────────────────
@@ -291,13 +328,13 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         tmr_wind_pow = "—"
         tmr_humidity = ""
 
-    # 次要信息（仅早间模式从实况取）
-    aqi     = live.get("aqi", "") if mode == "morning" else ""
-    pm25    = live.get("pm25", "") if mode == "morning" else ""
-    air_desc = live.get("air_desc", "") if mode == "morning" else ""
+    # 次要信息：仅早间模式展示（晚间小时预报无 AQI/气压等数据，不展示）
+    aqi        = live.get("aqi", "") if mode == "morning" else ""
+    pm25       = live.get("pm25", "") if mode == "morning" else ""
+    air_desc   = live.get("air_desc", "") if mode == "morning" else ""
     visibility = live.get("visibility", "") if mode == "morning" else ""
-    pressure = live.get("pressure", "") if mode == "morning" else ""
-    cloudrate = live.get("cloudrate", "") if mode == "morning" else ""
+    pressure   = live.get("pressure", "") if mode == "morning" else ""
+    cloudrate  = live.get("cloudrate", "") if mode == "morning" else ""
 
     # ── 一句话总结（天气概览 + 带伞）──────────────────────────────────────────
     weather_parts = []
