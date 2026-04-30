@@ -1,7 +1,8 @@
 """
 天气邮件正文生成器
-- 重点：当前实况 + 明日早/中/晚分段
-- 次要：AQI、PM2.5、能见度等辅助信息
+- 支持早晚两种推送模式（morning / evening）
+- morning：推送今天（上午带伞判断 + 今天全天 + 着装建议）
+- evening：推送明天（明天上午带伞判断 + 明天全天 + 着装建议）
 """
 from datetime import datetime, timedelta
 
@@ -43,20 +44,17 @@ def _is_rain(skycon: str) -> bool:
 
 
 # ── 提取明日分段数据 ──────────────────────────────────────────────────────────
-def _slice_tomorrow_hourly(hourly: list, today_str: str) -> dict:
+def _slice_hourly(hourly: list, target_date: str, label_date: str = "") -> dict:
     """
-    从小时预报中提取今日（剩余小时）和明日分段。
-    返回: { "now": {...}, "tomorrow_morning": {...}, "tomorrow_afternoon": {...}, "tomorrow_night": {...} }
+    从小时预报中提取指定日期的分段数据。
+    target_date: 要提取的日期字符串（如 "2026-04-30"）
+    label_date:  邮件中显示的日期前缀（如 "今天" / "明天"）
+    返回: { "morning": {...}, "afternoon": {...}, "night": {...} }
     """
-    now = datetime.now()
-    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-    today_date = now.strftime("%Y-%m-%d")
-
     slots = {
-        "now": None,
-        "tomorrow_morning": None,   # 06~11
-        "tomorrow_afternoon": None, # 12~17
-        "tomorrow_night": None,     # 18~23
+        "morning":   None,  # 06~11
+        "afternoon": None,  # 12~17
+        "night":     None,  # 18~23
     }
 
     for item in hourly:
@@ -66,22 +64,27 @@ def _slice_tomorrow_hourly(hourly: list, today_str: str) -> dict:
         except Exception:
             continue
 
-        d_str = dt.strftime("%Y-%m-%d")
+        if dt.strftime("%Y-%m-%d") != target_date:
+            continue
+
         hour = dt.hour
-
-        # 优先找最近的小时作为当前
-        if d_str == today_date and slots["now"] is None:
-            slots["now"] = item
-
-        if d_str == tomorrow:
-            if 6 <= hour <= 11 and slots["tomorrow_morning"] is None:
-                slots["tomorrow_morning"] = item
-            elif 12 <= hour <= 17 and slots["tomorrow_afternoon"] is None:
-                slots["tomorrow_afternoon"] = item
-            elif 18 <= hour <= 23 and slots["tomorrow_night"] is None:
-                slots["tomorrow_night"] = item
+        if 6 <= hour <= 11 and slots["morning"] is None:
+            slots["morning"] = item
+        elif 12 <= hour <= 17 and slots["afternoon"] is None:
+            slots["afternoon"] = item
+        elif 18 <= hour <= 23 and slots["night"] is None:
+            slots["night"] = item
 
     return slots
+
+
+def _slice_tomorrow_hourly(hourly: list, today_str: str) -> dict:
+    """
+    兼容旧接口，内部转发到 _slice_hourly。
+    """
+    now = datetime.now()
+    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+    return _slice_hourly(hourly, tomorrow, "明天")
 
 
 def _slot_label(slot: str) -> str:
