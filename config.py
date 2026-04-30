@@ -51,5 +51,6 @@ WEATHER_FIELDS = [
 # ==============================
 # 邮箱配置（腾讯企业邮箱）
 # ==============================
+SENDER_NAME = "Weather-Email"
 SMTP_SERVER = "smtp.exmail.qq.com"
 SMTP_PORT = 587

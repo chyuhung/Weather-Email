@@ -1,9 +1,10 @@
 import smtplib
 from email.mime.text import MIMEText
 
-def send_email(sender, auth_code, receiver, subject, content, smtp_server, smtp_port):
+def send_email(sender, auth_code, receiver, subject, content, smtp_server, smtp_port, sender_name=None):
     msg = MIMEText(content, "plain", "utf-8")
-    msg["From"] = sender
+    from_header = sender if not sender_name else f"{sender_name} <{sender}>"
+    msg["From"] = from_header
     msg["To"] = receiver
     msg["Subject"] = subject
 

@@ -96,7 +96,8 @@ def main():
         subject=f"{live['city']} {live['weather']} {live['temperature']}℃",
         content=content,
         smtp_server=SMTP_SERVER,
-        smtp_port=SMTP_PORT
+        smtp_port=SMTP_PORT,
+        sender_name=SENDER_NAME
     )
 
     if ok:
