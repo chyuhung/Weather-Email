@@ -124,11 +124,11 @@ def generate_html(weather: dict) -> tuple[str, str]:
         umbrella_emoji = "✅"
         umbrella_hint = "未来天气适宜出行，暂不需要带伞"
 
-    # ── 邮件主题 ──────────────────────────────────────────────────────────────
+    # ── 邮件主题（位置固定在家，不写地名） ──────────────────────────────────────
     temp_now = live.get("temperature", "?")
     weather_now = live.get("weather",
                            _sky_icon(live.get("skycon", "")))
-    subject = f"{umbrella_emoji} {city} {weather_now} {temp_now}℃ · {umbrella_hint}"
+    subject = f"{umbrella_emoji} {weather_now} {temp_now}℃ · {umbrella_hint}"
 
     # ── HTML 正文 ─────────────────────────────────────────────────────────────
     accent_color = "#e74c3c" if is_rain_now or will_rain_tomorrow else "#2c98f0"
@@ -152,7 +152,7 @@ def generate_html(weather: dict) -> tuple[str, str]:
     report_time = live.get("report_time", "")
 
     # 明日分段
-    def _slot_html(item: dict, label: str, is_highlight=False) -> str:
+    def _slot_html(item: dict, label: str, slot_key: str, is_highlight=False) -> str:
         if not item:
             return f"""
         <div class="card{' highlight' if is_highlight else ''}" style="opacity:.55">
@@ -165,11 +165,14 @@ def generate_html(weather: dict) -> tuple[str, str]:
         wd = item.get("wind_direction", "—")
         wp = item.get("wind_power", "—")
         humid = item.get("humidity", "")
-        rain_flag = "🔴 " if _is_rain(sky) else ""
-        extra = f'<span class="sub">{rain_flag}湿度{humid}%</span>' if humid not in ("", "N/A", None) else ""
+        is_rain_slot = _is_rain(sky)
+        # 明日时段带伞提示（只在有雨时显示）
+        umbrella_tag = '<div class="slot-umbrella">🌂 带伞</div>' if is_rain_slot else ''
+        extra = f'<div class="sub">湿度{humid}%</div>' if humid not in ("", "N/A", None) else ''
         return f"""
-        <div class="card{' highlight' if is_highlight else ''}">
+        <div class="card{' highlight' if is_highlight else ''}{' rainy' if is_rain_slot else ''}">
             <div class="card-label">{label}</div>
+            {umbrella_tag}
             <div class="card-main">
                 <span class="big-icon">{icon}</span>
                 <span class="big-temp">{temp}°</span>
@@ -259,7 +262,8 @@ def generate_html(weather: dict) -> tuple[str, str]:
   /* 明日分段 */
   .card {{ background: #f8f9fa; border-radius: 10px; padding: 12px 10px;
           text-align: center; }}
-  .card.highlight {{ background: {accent_bg}; }}
+  .card.rainy {{ border: 1.5px solid #e74c3c; }}
+  .slot-umbrella {{ background: #e74c3c; color: #fff; border-radius: 20px; font-size: 11px; padding: 2px 8px; margin-bottom: 6px; display: inline-block; }}
   .card-label {{ font-size: 11px; color: #aaa; margin-bottom: 6px; text-transform: uppercase;
                   letter-spacing: 1px; }}
   .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 2px; }}
@@ -312,9 +316,9 @@ def generate_html(weather: dict) -> tuple[str, str]:
   </div>
   <div class="section" style="padding-top:0">
     <div class="card-grid">
-      {_slot_html(slots.get("tomorrow_morning"), '早 6~11')}
-      {_slot_html(slots.get("tomorrow_afternoon"), '午 12~17')}
-      {_slot_html(slots.get("tomorrow_night"), '晚 18~23')}
+      {_slot_html(slots.get("tomorrow_morning"), '早 6~11', 'tomorrow_morning')}
+      {_slot_html(slots.get("tomorrow_afternoon"), '午 12~17', 'tomorrow_afternoon')}
+      {_slot_html(slots.get("tomorrow_night"), '晚 18~23', 'tomorrow_night')}
     </div>
   </div>
 
