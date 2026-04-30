@@ -479,7 +479,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   <!-- 一句话总结 -->
   <div class="hint-bar">
     <div class="hint-text">{summary_text}</div>
-    <div class="hint-sub">{report_time if mode == 'morning' and report_time else ''}</div>
   </div>
 
   <!-- {target_label}分段天气 -->
