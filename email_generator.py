@@ -416,7 +416,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   <!-- 顶栏 -->
   <div class="topbar">
     <span class="topbar-title">{mode_title}</span>
-    <span class="topbar-date">{now.strftime('%Y-%m-%d')}</span>
+    <span class="topbar-date">{target_date if mode == 'evening' else now.strftime('%Y-%m-%d')}</span>
   </div>
 
   <!-- {'此刻天气' if mode == 'morning' else '明日概览'} -->
