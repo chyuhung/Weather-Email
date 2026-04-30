@@ -90,7 +90,7 @@ class CaiyunAPI:
             return None
 
     @classmethod
-    def get_weather(cls, location, token, gaode_key=None, extensions="base"):
+    def get_weather(cls, location, token, gaode_key=None, extensions="base", hourlysteps=48):
         """
         获取彩云天气
         :param location: 经纬度字符串 "lng,lat"
@@ -116,7 +116,7 @@ class CaiyunAPI:
             params = {
                 "alert": "true",
                 "dailysteps": 3 if extensions == "all" else 1,
-                "hourlysteps": 24
+                "hourlysteps": hourlysteps
             }
 
             resp = requests.get(url, params=params, timeout=15)

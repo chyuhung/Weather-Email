@@ -1,8 +1,8 @@
 """
 天气邮件正文生成器
 - 支持早晚两种推送模式（morning / evening）
-- morning：推送今天（上午带伞判断 + 今天全天 + 着装建议）
-- evening：推送明天（明天上午带伞判断 + 明天全天 + 着装建议）
+- morning：推送今天（上午带伞判断 + 今天上午/下午/晚间 + 着装建议）
+- evening：推送明天（明天上午带伞判断 + 明天上午/下午/晚间 + 着装建议）
 """
 from datetime import datetime, timedelta
 
@@ -37,18 +37,58 @@ def _sky_icon(skycon: str) -> str:
 
 
 def _is_rain(skycon: str) -> bool:
-    rain_keys = ["RAIN", "STORM", "HAZE", "DUST", "SAND", "FOG",
-                 "雨", "霾", "雾", "沙", "雪"]
+    """判断是否需要带伞（雨、雪、雨夹雪）"""
+    rain_keys = ["RAIN", "STORM", "雪", "雨夹雪", "雨"]
     s = skycon.upper()
     return any(k.upper() in s for k in rain_keys)
 
 
-# ── 提取明日分段数据 ──────────────────────────────────────────────────────────
-def _slice_hourly(hourly: list, target_date: str, label_date: str = "") -> dict:
+# ── 着装建议 ──────────────────────────────────────────────────────────────────
+def _clothing_advice(temp_min: float, temp_max: float) -> tuple[str, str]:
+    """
+    根据温度范围返回着装建议。
+    返回: (简短建议, 详细说明)
+    """
+    # 用白天的温度（取 max）做主要判断
+    t = temp_max
+    if t <= 0:
+        brief = "🧥 极寒，厚羽绒服+围巾手套帽子"
+        detail = "气温极低，请穿厚羽绒服、围巾、手套、帽子，做好全面防寒。"
+    elif t <= 5:
+        brief = "🧥 严寒，厚羽绒服"
+        detail = "气温很低，建议穿厚羽绒服或棉衣，注意保暖。"
+    elif t <= 10:
+        brief = "🧥 寒冷，薄羽绒服/厚大衣"
+        detail = "气温较低，薄羽绒服或厚大衣合适，可内搭毛衣。"
+    elif t <= 15:
+        brief = "🧣 微冷，风衣/夹克/毛衣"
+        detail = "微冷天气，风衣、夹克或厚毛衣是不错的选择。"
+    elif t <= 20:
+        brief = "👔 凉爽，薄外套/卫衣"
+        detail = "天气凉爽，薄外套或卫衣即可，早晚注意加衣。"
+    elif t <= 25:
+        brief = "👕 舒适，长袖/薄衫"
+        detail = "温度舒适，长袖衬衫或薄衫刚好，可备一件薄外套。"
+    elif t <= 30:
+        brief = "👕 炎热，短袖为主"
+        detail = "天气较热，短袖为主，注意防晒。"
+    else:
+        brief = "🩳 酷热，清凉短袖，注意防暑"
+        detail = "高温天气，尽量穿清凉短袖，注意防暑降温、多喝水。"
+
+    # 如果温差大（>10℃），补充提醒
+    diff = temp_max - temp_min
+    if diff > 10:
+        detail += f" 日温差达{diff:.0f}℃，早晚注意加衣。"
+
+    return brief, detail
+
+
+# ── 提取指定日期分段数据 ──────────────────────────────────────────────────────
+def _slice_hourly(hourly: list, target_date: str) -> dict:
     """
     从小时预报中提取指定日期的分段数据。
     target_date: 要提取的日期字符串（如 "2026-04-30"）
-    label_date:  邮件中显示的日期前缀（如 "今天" / "明天"）
     返回: { "morning": {...}, "afternoon": {...}, "night": {...} }
     """
     slots = {
@@ -78,72 +118,109 @@ def _slice_hourly(hourly: list, target_date: str, label_date: str = "") -> dict:
     return slots
 
 
-def _slice_tomorrow_hourly(hourly: list, today_str: str) -> dict:
-    """
-    兼容旧接口，内部转发到 _slice_hourly。
-    """
-    now = datetime.now()
-    tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-    return _slice_hourly(hourly, tomorrow, "明天")
-
-
-def _slot_label(slot: str) -> str:
-    return {"now": "此刻", "tomorrow_morning": "明早", "tomorrow_afternoon": "明午", "tomorrow_night": "明晚"}[slot]
-
-
 # ── 主生成函数 ─────────────────────────────────────────────────────────────────
-def generate_html(weather: dict) -> tuple[str, str]:
+def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     """
     生成 HTML 邮件正文和邮件主题。
+    mode: "morning"（早间推送）或 "evening"（晚间推送）
     返回: (subject, html_body)
     """
     live = weather.get("live", {}) or {}
     city = live.get("city", weather.get("city", "未知"))
     source = weather.get("source", "unknown")
+    now = datetime.now()
+    today_str = now.strftime("%Y-%m-%d")
+    tomorrow = now + timedelta(days=1)
+    tomorrow_str = tomorrow.strftime("%Y-%m-%d")
 
-    # ── 判断带伞（主题核心） ──────────────────────────────────────────────────
-    now_sky = live.get("weather", live.get("skycon", ""))
-    is_rain_now = _is_rain(now_sky)
-    will_rain_tomorrow = False
+    # ── 根据 mode 决定目标日期 ──────────────────────────────────────────────
+    if mode == "morning":
+        target_date = today_str
+        target_label = "今天"
+    else:
+        target_date = tomorrow_str
+        target_label = "明天"
 
+    # ── 提取分段数据 ────────────────────────────────────────────────────────
     hourly = weather.get("hourly_forecast", [])
-    slots = _slice_tomorrow_hourly(hourly, datetime.now().strftime("%Y-%m-%d"))
-    for key in ["tomorrow_morning", "tomorrow_afternoon", "tomorrow_night"]:
+    slots = _slice_hourly(hourly, target_date)
+
+    # ── 带伞判断（基于目标日期各时段天气） ────────────────────────────────────
+    need_umbrella_morning = False
+    morning_item = slots.get("morning")
+    if morning_item:
+        morning_sky = morning_item.get("weather", morning_item.get("skycon", ""))
+        need_umbrella_morning = _is_rain(morning_sky)
+
+    rain_slots = []
+    for key, label in [("morning", "上午"), ("afternoon", "下午"), ("night", "晚间")]:
         item = slots.get(key)
         if item and _is_rain(item.get("weather", item.get("skycon", ""))):
-            will_rain_tomorrow = True
-            break
+            rain_slots.append(label)
 
-    if is_rain_now and will_rain_tomorrow:
+    any_rain = len(rain_slots) > 0
+
+    if need_umbrella_morning:
         umbrella_emoji = "🌂"
-        umbrella_hint = "全天有雨，请带伞"
-    elif is_rain_now:
+        umbrella_hint = f"{target_label}上午有雨，出门请带伞"
+    elif any_rain:
         umbrella_emoji = "🌂"
-        umbrella_hint = "现在有雨，请带伞"
-    elif will_rain_tomorrow:
-        umbrella_emoji = "⏰"
-        umbrella_hint = "明天有雨，请带伞"
+        umbrella_hint = f"{target_label}{'、'.join(rain_slots)}有雨，请带伞"
     else:
         umbrella_emoji = "☀️"
-        umbrella_hint = "无需带伞"
+        umbrella_hint = f"{target_label}无需带伞"
 
-    # ── 邮件主题（位置固定在家，不写地名） ──────────────────────────────────────
-    temp_now = live.get("temperature", "?")
-    weather_now = live.get("weather",
-                           _sky_icon(live.get("skycon", "")))
-    subject = f"{umbrella_emoji} {weather_now} {temp_now}℃ · {umbrella_hint}"
+    # ── 着装建议 ────────────────────────────────────────────────────────────
+    temps = []
+    for key in ["morning", "afternoon", "night"]:
+        item = slots.get(key)
+        if item and item.get("temperature") not in (None, "N/A"):
+            try:
+                temps.append(float(item["temperature"]))
+            except (ValueError, TypeError):
+                pass
 
-    # ── HTML 正文 ─────────────────────────────────────────────────────────────
-    accent_color = "#e74c3c" if is_rain_now or will_rain_tomorrow else "#2c98f0"
-    accent_bg    = "#fdf0ef" if is_rain_now or will_rain_tomorrow else "#edf6ff"
+    # 也尝试从每日预报中获取最高/最低温
+    forecast = weather.get("forecast", {})
+    if forecast and forecast.get("casts"):
+        for cast in forecast["casts"]:
+            if cast.get("date", "").startswith(target_date):
+                try:
+                    t_max = float(cast.get("day_temp", 0))
+                    t_min = float(cast.get("night_temp", 0))
+                    temps.extend([t_max, t_min])
+                except (ValueError, TypeError):
+                    pass
+
+    if temps:
+        temp_min = min(temps)
+        temp_max = max(temps)
+    else:
+        # 退而求其次用实况温度
+        try:
+            temp_max = float(live.get("temperature", 20))
+            temp_min = temp_max - 5
+        except (ValueError, TypeError):
+            temp_max, temp_min = 20, 15
+
+    clothing_brief, clothing_detail = _clothing_advice(temp_min, temp_max)
+
+    # ── 邮件主题 ────────────────────────────────────────────────────────────
+    subject = f"{umbrella_emoji} {temp_min:.0f}~{temp_max:.0f}℃ · {umbrella_hint}"
+
+    # ── HTML 正文 ───────────────────────────────────────────────────────────
+    accent_color = "#e74c3c" if any_rain else "#2c98f0"
+    accent_bg    = "#fdf0ef" if any_rain else "#edf6ff"
 
     # 当前实况
-    icon_now = _sky_icon(live.get("skycon", now_sky))
+    icon_now = _sky_icon(live.get("skycon", live.get("weather", "")))
     temp_now_str = live.get("temperature", "?")
-    humidity_now = live.get("humidity", live.get("humidity", "N/A"))
+    weather_now = live.get("weather", "")
+    humidity_now = live.get("humidity", "N/A")
     wind_dir_now = live.get("wind_direction", "—")
     wind_pow_now = live.get("wind_power", "—")
     feels_like = live.get("apparent_temperature", "")
+    report_time = live.get("report_time", "")
 
     # 次要信息
     aqi     = live.get("aqi", "")
@@ -152,10 +229,13 @@ def generate_html(weather: dict) -> tuple[str, str]:
     visibility = live.get("visibility", "")
     pressure = live.get("pressure", "")
     cloudrate = live.get("cloudrate", "")
-    report_time = live.get("report_time", "")
 
-    # 明日分段
-    def _slot_html(item: dict, label: str, slot_key: str, is_highlight=False) -> str:
+    # 预警提示
+    keypoint = weather.get("forecast_keypoint", "") or ""
+
+    # ── 构建 HTML ───────────────────────────────────────────────────────────
+
+    def _slot_html(item: dict, label: str, is_highlight=False) -> str:
         if not item:
             return f"""
         <div class="card{' highlight' if is_highlight else ''}" style="opacity:.55">
@@ -169,7 +249,6 @@ def generate_html(weather: dict) -> tuple[str, str]:
         wp = item.get("wind_power", "—")
         humid = item.get("humidity", "")
         is_rain_slot = _is_rain(sky)
-        # 明日时段带伞提示（只在有雨时显示）
         umbrella_tag = '<div class="slot-umbrella">🌂 带伞</div>' if is_rain_slot else ''
         extra = f'<div class="sub">湿度{humid}%</div>' if humid not in ("", "N/A", None) else ''
         return f"""
@@ -190,7 +269,7 @@ def generate_html(weather: dict) -> tuple[str, str]:
                 <span class="hero-icon">{icon_now}</span>
                 <span class="hero-temp">{temp_now_str}°C</span>
             </div>
-            <div class="hero-weather">{weather_now} {'<span class="rain-badge">🌂记得带伞</span>' if is_rain_now else ''}</div>
+            <div class="hero-weather">{weather_now} {'<span class="rain-badge">🌂记得带伞</span>' if _is_rain(weather_now) else ''}</div>
             {'<div class="hero-feels">体感 ' + feels_like + '°C</div>' if feels_like not in ("", "N/A", None, "?") else ''}
             <div class="hero-meta">
                 <span>💧 {humidity_now}%</span>
@@ -217,11 +296,11 @@ def generate_html(weather: dict) -> tuple[str, str]:
         extras_html = f"""
         <div class="extras">{" &nbsp;|&nbsp; ".join(extras)}</div>"""
 
-    # 预警提示
-    keypoint = weather.get("forecast_keypoint", "") or ""
     keypoint_html = f'<div class="keypoint">💡 {keypoint}</div>' if keypoint else ""
 
-    # ── 组装完整 HTML ─────────────────────────────────────────────────────────
+    # ── 组装完整 HTML ───────────────────────────────────────────────────────
+    mode_title = "🌤️ 早间天气" if mode == "morning" else "🌙 晚间天气"
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -246,7 +325,7 @@ def generate_html(weather: dict) -> tuple[str, str]:
   .section {{ padding: 16px 20px 8px; }}
   .section-title {{ font-size: 12px; color: #999; text-transform: uppercase;
                     letter-spacing: 1.5px; margin-bottom: 10px; font-weight: 600; }}
-  .card-grid {{ display: grid; grid-template-columns: repeat(4, 1fr);
+  .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr);
                 gap: 8px; }}
 
   /* 当前实况（hero） */
@@ -262,7 +341,7 @@ def generate_html(weather: dict) -> tuple[str, str]:
   .hero-feels {{ font-size: 13px; color: #888; margin-bottom: 6px; }}
   .hero-meta {{ display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #777; }}
 
-  /* 明日分段 */
+  /* 分段天气 */
   .card {{ background: #f8f9fa; border-radius: 10px; padding: 12px 10px;
           text-align: center; }}
   .card.rainy {{ border: 1.5px solid #e74c3c; }}
@@ -274,13 +353,18 @@ def generate_html(weather: dict) -> tuple[str, str]:
   .big-temp {{ font-size: 22px; font-weight: 700; color: #1a1a1a; }}
   .card-sub {{ font-size: 11px; color: #888; margin-top: 4px; line-height: 1.4; }}
   .sub {{ display: block; margin-top: 2px; }}
-  .rain-flag {{ color: #e74c3c; font-size: 11px; }}
 
   /* 重要提示 */
   .hint-bar {{ background: {accent_bg}; border-left: 4px solid {accent_color};
                margin: 12px 20px; padding: 10px 14px; border-radius: 0 8px 8px 0; }}
   .hint-text {{ font-size: 14px; color: #333; }}
   .hint-sub  {{ font-size: 12px; color: #888; margin-top: 2px; }}
+
+  /* 着装建议 */
+  .clothing-bar {{ background: #f0f9eb; border-left: 4px solid #67c23a;
+                   margin: 12px 20px; padding: 10px 14px; border-radius: 0 8px 8px 0; }}
+  .clothing-brief {{ font-size: 14px; color: #333; }}
+  .clothing-detail {{ font-size: 12px; color: #888; margin-top: 2px; }}
 
   /* 次要信息 */
   .extras {{ padding: 8px 20px 16px; display: flex; flex-wrap: wrap;
@@ -297,8 +381,8 @@ def generate_html(weather: dict) -> tuple[str, str]:
 <div class="wrap">
   <!-- 顶栏 -->
   <div class="topbar">
-    <span class="topbar-title">🌤️ Weather-Email</span>
-    <span class="topbar-date">{datetime.now().strftime('%Y-%m-%d')}</span>
+    <span class="topbar-title">{mode_title}</span>
+    <span class="topbar-date">{now.strftime('%Y-%m-%d')}</span>
   </div>
 
   <!-- 当前实况 -->
@@ -313,16 +397,22 @@ def generate_html(weather: dict) -> tuple[str, str]:
     <div class="hint-sub">{city} · {report_time}</div>
   </div>
 
-  <!-- 明日分段 -->
+  <!-- {target_label}分段天气 -->
   <div class="section">
-    <div class="section-title">明日天气</div>
+    <div class="section-title">{target_label}天气</div>
   </div>
   <div class="section" style="padding-top:0">
     <div class="card-grid">
-      {_slot_html(slots.get("tomorrow_morning"), '早 6~11', 'tomorrow_morning')}
-      {_slot_html(slots.get("tomorrow_afternoon"), '午 12~17', 'tomorrow_afternoon')}
-      {_slot_html(slots.get("tomorrow_night"), '晚 18~23', 'tomorrow_night')}
+      {_slot_html(slots.get("morning"), '上午 6~11', mode == "morning")}
+      {_slot_html(slots.get("afternoon"), '下午 12~17')}
+      {_slot_html(slots.get("night"), '晚间 18~23')}
     </div>
+  </div>
+
+  <!-- 着装建议 -->
+  <div class="clothing-bar">
+    <div class="clothing-brief">{clothing_brief}</div>
+    <div class="clothing-detail">{clothing_detail}（{temp_min:.0f}~{temp_max:.0f}℃）</div>
   </div>
 
   {keypoint_html}
@@ -338,8 +428,8 @@ def generate_html(weather: dict) -> tuple[str, str]:
 
 
 # ── 纯文本版本（兼容备用） ────────────────────────────────────────────────────
-def generate_text(weather: dict) -> tuple[str, str]:
-    subject, html = generate_html(weather)
+def generate_text(weather: dict, mode: str = "evening") -> tuple[str, str]:
+    subject, html = generate_html(weather, mode=mode)
     live = weather.get("live", {}) or {}
     city = live.get("city", "?")
     temp = live.get("temperature", "?")
@@ -357,8 +447,8 @@ def generate_text(weather: dict) -> tuple[str, str]:
         "",
         f"📌 {rain_hint}",
         "",
-        "─── 明日天气 ───",
-        "早 (6~11时) / 午 (12~17时) / 晚 (18~23时)",
+        "─── 天气预报 ───",
+        "上午 (6~11时) / 下午 (12~17时) / 晚间 (18~23时)",
         "(请查看邮件正文获取详细预报)",
         "",
         "Weather-Email 自动推送",

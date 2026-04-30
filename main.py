@@ -1,4 +1,5 @@
 import os
+import argparse
 from config import *
 from weather_api import WeatherAPI, CaiyunAPI
 from email_sender import send_email
@@ -12,7 +13,12 @@ except ImportError:
     pass
 
 def main():
-    print("正在获取天气...")
+    parser = argparse.ArgumentParser(description="Weather-Email 天气邮件推送")
+    parser.add_argument("--mode", choices=["morning", "evening"], default="evening",
+                        help="推送模式: morning=早间推送, evening=晚间推送")
+    args = parser.parse_args()
+
+    print(f"正在获取天气... (模式: {args.mode})")
 
     # 从环境变量读取敏感信息
     GAODE_KEY = os.getenv("GAODE_KEY")
@@ -31,7 +37,7 @@ def main():
         if not CAIYUN_TOKEN:
             print("❌ 彩云 API Token 缺失！请设置环境变量 CAIYUN_TOKEN")
             return
-        weather = CaiyunAPI.get_weather(LOCATION, CAIYUN_TOKEN, gaode_key=GAODE_KEY, extensions="all")
+        weather = CaiyunAPI.get_weather(LOCATION, CAIYUN_TOKEN, gaode_key=GAODE_KEY, extensions="all", hourlysteps=48)
     else:
         if not GAODE_KEY:
             print("❌ 高德 API Key 缺失！请设置环境变量 GAODE_KEY")
@@ -54,7 +60,7 @@ def main():
         print(f"🌤️ {weather['forecast_keypoint']}")
 
     # ========== 生成精美邮件（HTML） ==========
-    subject, html_body = generate_html(weather)
+    subject, html_body = generate_html(weather, mode=args.mode)
 
     print(f"📧 邮件主题: {subject}")
     print("📤 发送邮件中...")

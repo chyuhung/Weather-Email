@@ -1,12 +1,22 @@
-name: 每日天气邮件推送
+name: 天气邮件推送（早晚双时段）
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    # 晚间推送：UTC 14:00 = 北京时间 22:00
+    - cron: "0 14 * * *"
+    # 早间推送：UTC 23:00 = 北京时间 07:00
+    - cron: "0 23 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: '推送模式: morning 或 evening'
+        required: false
+        default: 'evening'
 
 jobs:
-  send-weather:
+  send-weather-evening:
+    # 只在晚间 cron 或手动指定 evening 时运行
+    if: github.event.inputs.mode == 'evening' || (github.event_name == 'schedule' && github.event.schedule == '0 14 * * *') || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode != 'morning')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,10 +29,35 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run weather script
+      - name: Run evening weather script
         env:
           GAODE_KEY: ${{ secrets.GAODE_KEY }}
+          CAIYUN_TOKEN: ${{ secrets.CAIYUN_TOKEN }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
-        run: python -B main.py
+        run: python -B main.py --mode evening
+
+  send-weather-morning:
+    # 只在早间 cron 或手动指定 morning 时运行
+    if: github.event.inputs.mode == 'morning' || (github.event_name == 'schedule' && github.event.schedule == '0 23 * * *')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run morning weather script
+        env:
+          GAODE_KEY: ${{ secrets.GAODE_KEY }}
+          CAIYUN_TOKEN: ${{ secrets.CAIYUN_TOKEN }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+        run: python -B main.py --mode morning
