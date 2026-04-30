@@ -19,10 +19,7 @@ LOCATION = "106.50634259598424,29.73512423376447"  # 重庆蔡家岗街道
 # 方式B：adcode（区/街道）
 # LOCATION = "500112008"
 
-# 2. 获取类型
-# base = 仅实况天气
-# all  = 实况 + 3天预报
-WEATHER_TYPE = "base"
+
 
 # ========== 彩云天气配置 ==========
 # 彩云 API Token（从 https://www.caiyunapp.com/h5 获取）

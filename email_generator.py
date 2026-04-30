@@ -304,11 +304,11 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         weather_summary = ""
 
     if weather_summary and rain_hint:
-        summary_text = f"💡 {weather_summary}，{rain_hint}"
+        summary_text = f"{weather_summary}，{rain_hint}"
     elif weather_summary:
-        summary_text = f"💡 {weather_summary}"
+        summary_text = f"{weather_summary}"
     elif rain_hint:
-        summary_text = f"💡 {rain_hint}"
+        summary_text = f"{rain_hint}"
     else:
         summary_text = ""
 
@@ -328,7 +328,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         wp = item.get("wind_power", "—")
         humid = item.get("humidity", "")
         is_rain_slot = _is_rain(sky)
-        umbrella_tag = '<div class="slot-umbrella">🌂 带伞</div>' if is_rain_slot else ''
+        umbrella_tag = '<div class="slot-umbrella">🌂</div>' if is_rain_slot else ''
         extra = f'<div class="sub">湿度{humid}%</div>' if humid not in ("", "N/A", None) else ''
         return f"""
         <div class="card{' highlight' if is_highlight else ''}{' rainy' if is_rain_slot else ''}">
@@ -349,7 +349,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 <span class="hero-icon">{icon_now}</span>
                 <span class="hero-temp">{temp_now_str}°C</span>
             </div>
-            <div class="hero-weather">{weather_now} {'<span class="rain-badge"></span>' if _is_rain(weather_now) else ''}</div>
+            <div class="hero-weather">{weather_now}</div>
             {'<div class="hero-feels">体感 ' + feels_like + '°C</div>' if feels_like not in ("", "N/A", None, "?") else ''}
             <div class="hero-meta">
                 <span>💧 {humidity_now}%</span>
@@ -364,7 +364,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 <span class="hero-icon">{tmr_icon}</span>
                 <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
             </div>
-            <div class="hero-weather">{tmr_weather} {'<span class="rain-badge"></span>' if _is_rain(tmr_skycon) or any_rain else ''}</div>
+            <div class="hero-weather">{tmr_weather}</div>
         </div>"""
 
     # 次要信息区
@@ -385,7 +385,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         extras_html = f"""
         <div class="extras">{" &nbsp;|&nbsp; ".join(extras)}</div>"""
 
-    # keypoint_html 已合并到 summary_text，不再单独显示
 
     # ── 组装完整 HTML ───────────────────────────────────────────────────────
     
@@ -473,7 +472,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     <div class="hint-text">{summary_text}</div>
   </div>
 
-  <!-- {target_label}分段天气 -->
   <div class="section">
     <div class="card-grid">
       {_slot_html(slots.get("morning"), '上午', mode == "morning")}
