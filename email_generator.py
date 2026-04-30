@@ -212,7 +212,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     accent_color = "#e74c3c" if any_rain else "#2c98f0"
     accent_bg    = "#fdf0ef" if any_rain else "#edf6ff"
 
-    # 当前实况
+    # 当前实况（早间用）
     icon_now = _sky_icon(live.get("skycon", live.get("weather", "")))
     temp_now_str = live.get("temperature", "?")
     weather_now = live.get("weather", "")
@@ -222,13 +222,34 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     feels_like = live.get("apparent_temperature", "")
     report_time = live.get("report_time", "")
 
-    # 次要信息
-    aqi     = live.get("aqi", "")
-    pm25    = live.get("pm25", "")
-    air_desc = live.get("air_desc", "")
-    visibility = live.get("visibility", "")
-    pressure = live.get("pressure", "")
-    cloudrate = live.get("cloudrate", "")
+    # 明日全天概览（晚间用）—— 从 daily forecast 取
+    tomorrow_cast = None
+    forecast_data = weather.get("forecast", {}) or {}
+    for cast in (forecast_data.get("casts") or []):
+        if cast.get("date", "").startswith(target_date):
+            tomorrow_cast = cast
+            break
+
+    if tomorrow_cast:
+        tmr_skycon = tomorrow_cast.get("skycon", tomorrow_cast.get("day_weather", ""))
+        tmr_icon = _sky_icon(tmr_skycon)
+        tmr_weather = tomorrow_cast.get("day_weather", "")
+        tmr_day_temp = tomorrow_cast.get("day_temp", "?")
+        tmr_night_temp = tomorrow_cast.get("night_temp", "?")
+    else:
+        tmr_skycon = ""
+        tmr_icon = "🌤️"
+        tmr_weather = ""
+        tmr_day_temp = "?"
+        tmr_night_temp = "?"
+
+    # 次要信息（仅早间模式从实况取）
+    aqi     = live.get("aqi", "") if mode == "morning" else ""
+    pm25    = live.get("pm25", "") if mode == "morning" else ""
+    air_desc = live.get("air_desc", "") if mode == "morning" else ""
+    visibility = live.get("visibility", "") if mode == "morning" else ""
+    pressure = live.get("pressure", "") if mode == "morning" else ""
+    cloudrate = live.get("cloudrate", "") if mode == "morning" else ""
 
     # 预警提示
     keypoint = weather.get("forecast_keypoint", "") or ""
@@ -262,7 +283,9 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
             <div class="card-sub">{wd} {wp}级{extra}</div>
         </div>"""
 
-    now_card = f"""
+    # ── Hero 卡片：早间=此刻实况，晚间=明日全天概览 ──────────────────────────
+    if mode == "morning":
+        now_card = f"""
         <div class="card hero">
             <div class="hero-location">📍 {city}</div>
             <div class="hero-main">
@@ -276,6 +299,17 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 <span>🍃 {wind_dir_now} {wind_pow_now}级</span>
                 <span>🕐 {report_time}</span>
             </div>
+        </div>"""
+    else:
+        # 晚间：明日全天概览
+        now_card = f"""
+        <div class="card hero">
+            <div class="hero-location">📍 {city} · 明日天气</div>
+            <div class="hero-main">
+                <span class="hero-icon">{tmr_icon}</span>
+                <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
+            </div>
+            <div class="hero-weather">{tmr_weather} {'<span class="rain-badge">🌂明日有雨</span>' if _is_rain(tmr_skycon) or any_rain else ''}</div>
         </div>"""
 
     # 次要信息区
@@ -299,7 +333,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     keypoint_html = f'<div class="keypoint">💡 {keypoint}</div>' if keypoint else ""
 
     # ── 组装完整 HTML ───────────────────────────────────────────────────────
-    mode_title = "🌤️ 早间天气" if mode == "morning" else "🌙 晚间天气"
+    mode_title = "今日天气预报" if mode == "morning" else "明日天气预报"
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -385,16 +419,16 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     <span class="topbar-date">{now.strftime('%Y-%m-%d')}</span>
   </div>
 
-  <!-- 当前实况 -->
+  <!-- {'此刻天气' if mode == 'morning' else '明日概览'} -->
   <div class="section">
-    <div class="section-title">此刻天气</div>
+    <div class="section-title">{'此刻天气' if mode == 'morning' else '明日概览'}</div>
   </div>
   {now_card}
 
   <!-- 带伞提示 -->
   <div class="hint-bar">
     <div class="hint-text">{umbrella_emoji} {umbrella_hint}</div>
-    <div class="hint-sub">{city} · {report_time}</div>
+    <div class="hint-sub">{city}{(' · ' + report_time) if mode == 'morning' and report_time else ''}</div>
   </div>
 
   <!-- {target_label}分段天气 -->
