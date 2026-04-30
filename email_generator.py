@@ -266,18 +266,30 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
             tomorrow_cast = cast
             break
 
+    # 晚间模式：从明天上午分段数据中取更丰富的实况信息
     if tomorrow_cast:
         tmr_skycon = tomorrow_cast.get("skycon", tomorrow_cast.get("day_weather", ""))
-        tmr_icon = _sky_icon(tmr_skycon)
-        tmr_weather = tomorrow_cast.get("day_weather", "")
         tmr_day_temp = tomorrow_cast.get("day_temp", "?")
         tmr_night_temp = tomorrow_cast.get("night_temp", "?")
     else:
         tmr_skycon = ""
-        tmr_icon = "🌤️"
-        tmr_weather = ""
         tmr_day_temp = "?"
         tmr_night_temp = "?"
+
+    # 用明天上午分段数据补充晚间 hero（与早间模式对齐：实况感+湿度+风力）
+    tmr_morning_slot = slots.get("morning")
+    if tmr_morning_slot:
+        tmr_icon = _sky_icon(tmr_morning_slot.get("skycon", tmr_morning_slot.get("weather", "")))
+        tmr_weather = tmr_morning_slot.get("weather", "")
+        tmr_wind_dir = tmr_morning_slot.get("wind_direction", "—")
+        tmr_wind_pow = tmr_morning_slot.get("wind_power", "—")
+        tmr_humidity = tmr_morning_slot.get("humidity", "")
+    else:
+        tmr_icon = _sky_icon(tmr_skycon) if tmr_skycon else "🌤️"
+        tmr_weather = tomorrow_cast.get("day_weather", "") if tomorrow_cast else ""
+        tmr_wind_dir = "—"
+        tmr_wind_pow = "—"
+        tmr_humidity = ""
 
     # 次要信息（仅早间模式从实况取）
     aqi     = live.get("aqi", "") if mode == "morning" else ""
@@ -357,7 +369,16 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 </div>
         </div>"""
     else:
-        # 晚间：明日全天概览
+        # 晚间：明日全天概览 + 上午分段补充信息（与早间模式对齐）
+        tmr_extra_html = ""
+        if tmr_wind_dir != "—" or tmr_humidity:
+            parts = []
+            if tmr_humidity and tmr_humidity not in ("N/A", ""):
+                parts.append(f"💧 {tmr_humidity}%")
+            if tmr_wind_dir != "—":
+                parts.append(f"🍃 {tmr_wind_dir} {tmr_wind_pow}级")
+            tmr_extra_html = f'<div class="hero-meta">{"<span>" + "</span><span>".join(parts) + "</span>"}</div>'
+
         now_card = f"""
         <div class="card hero">
             <div class="hero-main">
@@ -365,6 +386,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
                 <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
             </div>
             <div class="hero-weather">{tmr_weather}</div>
+            {tmr_extra_html}
         </div>"""
 
     # 次要信息区
