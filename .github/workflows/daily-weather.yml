@@ -7,16 +7,10 @@ on:
     # 早间推送：UTC 23:00 = 北京时间 07:00
     - cron: "0 23 * * *"
   workflow_dispatch:
-    inputs:
-      mode:
-        description: '推送模式: morning 或 evening'
-        required: false
-        default: 'morning'
+    # 手动触发时自动根据北京时间判断模式
 
 jobs:
-  send-weather-evening:
-    # 仅在晚间 cron（北京时间 22:00）触发，不响应手动调度
-    if: github.event_name == 'schedule' && github.event.schedule == '0 14 * * *'
+  send-weather:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,35 +23,24 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run evening weather script
+      - name: Determine mode and run
         env:
           GAODE_KEY: ${{ secrets.GAODE_KEY }}
           CAIYUN_TOKEN: ${{ secrets.CAIYUN_TOKEN }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
-        run: python -B main.py --mode evening
-
-  send-weather-morning:
-    # 在早间 cron（北京时间 07:00）或手动调度时触发
-    if: github.event.inputs.mode == 'morning' || github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run morning weather script
-        env:
-          GAODE_KEY: ${{ secrets.GAODE_KEY }}
-          CAIYUN_TOKEN: ${{ secrets.CAIYUN_TOKEN }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
-          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
-        run: python -B main.py --mode morning
+        run: |
+          # 获取北京时间 (UTC+8)
+          BEIJING_HOUR=$(TZ='Asia/Shanghai' date +%H)
+          echo "Current Beijing hour: $BEIJING_HOUR"
+          
+          # 判断模式：6:00-13:59 为 morning，14:00-5:59 为 evening
+          if [ "$BEIJING_HOUR" -ge 6 ] && [ "$BEIJING_HOUR" -lt 14 ]; then
+            MODE="morning"
+          else
+            MODE="evening"
+          fi
+          echo "Auto-selected mode: $MODE"
+          
+          python -B main.py --mode $MODE
