@@ -9,14 +9,18 @@ on:
   workflow_dispatch:
     # 手动触发时自动根据北京时间判断模式
 
+env:
+  # 使用 Node.js 24 运行 actions
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   send-weather:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
