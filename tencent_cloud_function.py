@@ -6,28 +6,25 @@ import json
 import urllib.request
 import urllib.error
 
+
 def run():
     # ========== 【必须修改这4个信息】 ==========
-    GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 替换为你的 GitHub 个人访问令牌
-    GITHUB_USER = "your-github-username"  # 替换为你的 GitHub 用户名
-    REPO_NAME = "your-repo-name"  # 替换为你的 GitHub 仓库名
-    WORKFLOW_NAME = "weather-email.yml"  # 替换为你的 GitHub Action 工作流文件名
+    GITHUB_TOKEN  = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    GITHUB_USER   = "your-github-username"
+    REPO_NAME     = "Weather-Email"
+    WORKFLOW_NAME = "daily-weather.yml"
     # =========================================
 
-    # 构造请求数据：触发 main 分支
     payload = json.dumps({"ref": "main"}).encode('utf-8')
 
-    # 请求头：身份认证
     headers = {
         'Authorization': f'token {GITHUB_TOKEN}',
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
     }
 
-    # GitHub API 地址
     url = f'https://api.github.com/repos/{GITHUB_USER}/{REPO_NAME}/actions/workflows/{WORKFLOW_NAME}/dispatches'
 
-    # 发送请求触发 Action
     try:
         req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
         with urllib.request.urlopen(req) as resp:
