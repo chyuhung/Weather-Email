@@ -1,6 +1,6 @@
 import os
 import argparse
-from config import SMTP_SERVER, SMTP_PORT, SENDER_NAME, WEATHER_SOURCE, WEATHER_FIELDS
+from config import SMTP_SERVER, SMTP_PORT, SENDER_NAME, WEATHER_SOURCE
 from weather_api import WeatherAPI, CaiyunAPI
 from email_sender import send_email
 from email_generator import generate_html

@@ -156,6 +156,8 @@ class CaiyunAPI:
             hourly_forecast = []
             if extensions == "all":
                 hourly_data = result.get("hourly", {})
+                # 提取小时预报描述（如"未来24小时阴"）
+                weather_data["hourly_description"] = hourly_data.get("description", "")
                 temp_vals = hourly_data.get("temperature", [])
                 skycon_vals = hourly_data.get("skycon", [])
                 wind_vals = hourly_data.get("wind", [])
@@ -300,6 +302,4 @@ class WeatherAPI:
         except Exception as e:
             return {"success": False, "error": f"网络/解析异常: {str(e)}"}
 
-    @classmethod
-    def get_live_weather(cls, city_or_location, amap_key):
-        return cls.get_weather(city_or_location, amap_key, extensions="base")
+
