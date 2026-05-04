@@ -1,8 +1,8 @@
 """
 天气邮件正文生成器
 - 支持早晚两种推送模式（morning / evening）
-- morning：推送今天（上午带伞判断 + 今天上午/下午/晚间 + 着装建议）
-- evening：推送明天（明天上午带伞判断 + 明天上午/下午/晚间 + 着装建议）
+- morning：推送今天（今日全天概览 + 今天上午/下午/晚间 + 着装建议）
+- evening：推送明天（明日全天概览 + 明天上午/下午/晚间 + 着装建议）
 """
 from datetime import datetime, timedelta
 
@@ -218,15 +218,18 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
     # 也尝试从每日预报中获取最高/最低温
     forecast = weather.get("forecast", {})
+    target_cast = None
     if forecast and forecast.get("casts"):
         for cast in forecast["casts"]:
             if cast.get("date", "").startswith(target_date):
+                target_cast = cast
                 try:
                     t_max = float(cast.get("day_temp", 0))
                     t_min = float(cast.get("night_temp", 0))
                     temps.extend([t_max, t_min])
                 except (ValueError, TypeError):
                     pass
+                break
 
     if temps:
         temp_min = min(temps)
@@ -285,48 +288,50 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     accent_color = "#e74c3c" if any_rain else "#2c98f0"
     accent_bg    = "#fdf0ef" if any_rain else "#edf6ff"
 
-    # 当前实况（早间用）
-    icon_now = _sky_icon(live.get("skycon", live.get("weather", "")))
-    temp_now_str = live.get("temperature", "?")
-    weather_now = live.get("weather", "")
-    humidity_now = live.get("humidity", "N/A")
-    wind_dir_now = live.get("wind_direction", "—")
-    wind_pow_now = live.get("wind_power", "—")
-    feels_like = live.get("apparent_temperature", "")
-    report_time = live.get("report_time", "")
-
-    # 明日全天概览（晚间用）—— 从 daily forecast 取
-    tomorrow_cast = None
-    forecast_data = weather.get("forecast", {}) or {}
-    for cast in (forecast_data.get("casts") or []):
-        if cast.get("date", "").startswith(target_date):
-            tomorrow_cast = cast
-            break
-
-    # 晚间模式：从明天上午分段数据中取更丰富的实况信息
-    if tomorrow_cast:
-        tmr_skycon = tomorrow_cast.get("skycon", tomorrow_cast.get("day_weather", ""))
-        tmr_day_temp = tomorrow_cast.get("day_temp", "?")
-        tmr_night_temp = tomorrow_cast.get("night_temp", "?")
+    # ── Hero 卡片：目标日全天概览 ───────────────────────────────────────────
+    # 从每日预报取最高/最低温 + 主天气
+    if target_cast:
+        target_skycon = target_cast.get("skycon", target_cast.get("day_weather", ""))
+        target_day_temp = target_cast.get("day_temp", "?")
+        target_night_temp = target_cast.get("night_temp", "?")
     else:
-        tmr_skycon = ""
-        tmr_day_temp = "?"
-        tmr_night_temp = "?"
+        target_skycon = ""
+        target_day_temp = "?"
+        target_night_temp = "?"
 
-    # 用明天上午分段数据补充晚间 hero（与早间模式对齐：实况感+湿度+风力）
-    tmr_morning_slot = slots.get("morning")
-    if tmr_morning_slot:
-        tmr_icon = _sky_icon(tmr_morning_slot.get("skycon", tmr_morning_slot.get("weather", "")))
-        tmr_weather = tmr_morning_slot.get("weather", "")
-        tmr_wind_dir = tmr_morning_slot.get("wind_direction", "—")
-        tmr_wind_pow = tmr_morning_slot.get("wind_power", "—")
-        tmr_humidity = tmr_morning_slot.get("humidity", "")
+    # 用上午分段数据补充 hero（湿度+风力等）
+    hero_morning = slots.get("morning")
+    if hero_morning:
+        hero_icon = _sky_icon(hero_morning.get("skycon", hero_morning.get("weather", "")))
+        hero_weather = hero_morning.get("weather", "")
+        hero_wind_dir = hero_morning.get("wind_direction", "—")
+        hero_wind_pow = hero_morning.get("wind_power", "—")
+        hero_humidity = hero_morning.get("humidity", "")
     else:
-        tmr_icon = _sky_icon(tmr_skycon) if tmr_skycon else "🌤️"
-        tmr_weather = tomorrow_cast.get("day_weather", "") if tomorrow_cast else ""
-        tmr_wind_dir = "—"
-        tmr_wind_pow = "—"
-        tmr_humidity = ""
+        hero_icon = _sky_icon(target_skycon) if target_skycon else "🌤️"
+        hero_weather = target_cast.get("day_weather", "") if target_cast else ""
+        hero_wind_dir = "—"
+        hero_wind_pow = "—"
+        hero_humidity = ""
+
+    hero_extra_html = ""
+    if hero_wind_dir != "—" or hero_humidity:
+        parts = []
+        if hero_humidity and hero_humidity not in ("N/A", ""):
+            parts.append(f"💧 {hero_humidity}%")
+        if hero_wind_dir != "—":
+            parts.append(f"🍃 {hero_wind_dir} {hero_wind_pow}级")
+        hero_extra_html = f'<div class="hero-meta">{"<span>" + "</span><span>".join(parts) + "</span>"}</div>'
+
+    now_card = f"""
+        <div class="card hero">
+            <div class="hero-main">
+                <span class="hero-icon">{hero_icon}</span>
+                <span class="hero-temp">{target_night_temp}~{target_day_temp}°C</span>
+            </div>
+            <div class="hero-weather">{hero_weather}</div>
+            {hero_extra_html}
+        </div>"""
 
     # 次要信息：仅早间模式展示（晚间小时预报无 AQI/气压等数据，不展示）
     aqi        = live.get("aqi", "") if mode == "morning" else ""
@@ -390,42 +395,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
             <div class="card-sub">{wd} {wp}级{extra}</div>
         </div>"""
 
-    # ── Hero 卡片：早间=此刻实况，晚间=明日全天概览 ──────────────────────────
-    if mode == "morning":
-        now_card = f"""
-        <div class="card hero">
-            <div class="hero-main">
-                <span class="hero-icon">{icon_now}</span>
-                <span class="hero-temp">{temp_now_str}°C</span>
-            </div>
-            <div class="hero-weather">{weather_now}</div>
-            {'<div class="hero-feels">体感 ' + feels_like + '°C</div>' if feels_like not in ("", "N/A", None, "?") else ''}
-            <div class="hero-meta">
-                <span>💧 {humidity_now}%</span>
-                <span>🍃 {wind_dir_now} {wind_pow_now}级</span>
-                </div>
-        </div>"""
-    else:
-        # 晚间：明日全天概览 + 上午分段补充信息（与早间模式对齐）
-        tmr_extra_html = ""
-        if tmr_wind_dir != "—" or tmr_humidity:
-            parts = []
-            if tmr_humidity and tmr_humidity not in ("N/A", ""):
-                parts.append(f"💧 {tmr_humidity}%")
-            if tmr_wind_dir != "—":
-                parts.append(f"🍃 {tmr_wind_dir} {tmr_wind_pow}级")
-            tmr_extra_html = f'<div class="hero-meta">{"<span>" + "</span><span>".join(parts) + "</span>"}</div>'
-
-        now_card = f"""
-        <div class="card hero">
-            <div class="hero-main">
-                <span class="hero-icon">{tmr_icon}</span>
-                <span class="hero-temp">{tmr_night_temp}~{tmr_day_temp}°C</span>
-            </div>
-            <div class="hero-weather">{tmr_weather}</div>
-            {tmr_extra_html}
-        </div>"""
-
     # 次要信息区
     extras = []
     if aqi and aqi not in ("N/A", "", None):
@@ -472,7 +441,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr);
                 gap: 8px; }}
 
-  /* 当前实况（hero） */
+  /* 全天概览（hero） */
   .card.hero {{ background: {accent_bg}; border-radius: 12px 12px 0 0;
                 padding: 18px 20px; margin: 14px 20px 0; }}
   .hero-main {{ display: flex; align-items: flex-end; gap: 8px; margin-bottom: 4px; }}
@@ -481,7 +450,6 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   .hero-weather {{ font-size: 16px; color: #555; margin-bottom: 6px; }}
   .rain-badge {{ background: #e74c3c; color: #fff; border-radius: 20px;
                  padding: 2px 10px; font-size: 12px; margin-left: 6px; }}
-  .hero-feels {{ font-size: 13px; color: #888; margin-bottom: 6px; }}
   .hero-meta {{ display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #777; }}
 
   /* 分段天气 */
@@ -521,7 +489,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
   <!-- 顶栏 -->
   <div class="topbar">
     <span class="topbar-title">{mode_title}</span>
-    <span class="topbar-date">{target_date if mode == 'evening' else now.strftime('%Y-%m-%d')}</span>
+    <span class="topbar-date">{target_date}</span>
   </div>
 
   {now_card}
@@ -567,18 +535,22 @@ def generate_text(weather: dict, mode: str = "evening") -> tuple[str, str]:
     humidity = live.get("humidity", "?")
     wind_dir = live.get("wind_direction", "?")
     wind_pow = live.get("wind_power", "?")
-    report = live.get("report_time", "?")
     rain_hint = "记得带伞！" if _is_rain(weather_now) else "暂不需要带伞"
 
+    if mode == "morning":
+        day_label = "今日"
+    else:
+        day_label = "明日"
+
     lines = [
-        f"【{city}】{weather_now} {temp}℃",
+        f"【{city}】{day_label}天气预报",
+        f"{weather_now} {temp}℃",
         f"💧 湿度{humidity}%  🍃 {wind_dir} {wind_pow}级",
-        f"🕐 更新于 {report}",
         "",
         f"📌 {rain_hint}",
         "",
         "─── 天气预报 ───",
-        "上午 (6~11时) / 下午 (12~17时) / 晚间 (18~23时)",
+        "上午 / 下午 / 晚间",
         "(请查看邮件正文获取详细预报)",
         "",
         "Weather-Email 自动推送",
