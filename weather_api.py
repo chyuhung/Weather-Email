@@ -164,7 +164,7 @@ class CaiyunAPI:
 
                 # 构建时间索引，方便后续匹配
                 temp_vals = {x.get("datetime"): x for x in hourly_data.get("temperature", [])}
-                skycon_vals = {x.get("datetime"): x for("value") for x in hourly_data.get("skycon", [])}
+                skycon_vals = {x.get("datetime"): x.get("value") for x in hourly_data.get("skycon", [])}
                 wind_vals = {x.get("datetime"): x for x in hourly_data.get("wind", [])}
                 humid_vals = {x.get("datetime"): x.get("value") for x in hourly_data.get("humidity", [])}
                 precip_vals = {x.get("datetime"): x for x in hourly_data.get("precipitation", [])}
