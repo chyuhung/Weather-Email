@@ -79,11 +79,11 @@ class CaiyunAPI:
             return None
 
     @classmethod
-    def get_weather(cls, location, token, gaode_key=None, extensions="base", hourlysteps=48):
+    def get_weather(cls, location, token, gaode_key=None, extensions="base", hourlysteps=48, dailysteps=None):
         try:
             parts = location.split(",")
             if len(parts) != 2:
-                return {"success": False, "error": "经纬度格式错误，应为 lng,lat"}
+                return {"success": False, "error": "经纬度格式错误,应为 lng,lat"}
             lng, lat = parts[0].strip(), parts[1].strip()
 
             # 逆地理获取地名
@@ -94,9 +94,12 @@ class CaiyunAPI:
                 city_name = f"{lat}N, {lng}E"
 
             url = cls._API_URL.format(token=token, lng=lng, lat=lat)
+            # dailysteps: 早间模式仅需今天(1),晚间模式需要今天+明天(2)
+            if dailysteps is None:
+                dailysteps = 2 if extensions == "all" else 1
             params = {
                 "alert": "true",
-                "dailysteps": 3 if extensions == "all" else 1,
+                "dailysteps": dailysteps,
                 "hourlysteps": hourlysteps
             }
 
@@ -156,43 +159,112 @@ class CaiyunAPI:
             hourly_forecast = []
             if extensions == "all":
                 hourly_data = result.get("hourly", {})
-                # 提取小时预报描述（如"未来24小时阴"）
+                # 提取小时预报描述（如“小雨，今天中午12点钟后雨停，转多云”）
                 weather_data["hourly_description"] = hourly_data.get("description", "")
-                temp_vals = hourly_data.get("temperature", [])
-                skycon_vals = hourly_data.get("skycon", [])
-                wind_vals = hourly_data.get("wind", [])
 
-                for item in temp_vals:
-                    dt_str = item.get("datetime", "")
-                    sky = next((s.get("value") for s in skycon_vals if s.get("datetime") == dt_str), "CLEAR_DAY")
-                    w = next((w for w in wind_vals if w.get("datetime") == dt_str), {})
-                    humid = w.get("humidity")
+                # 构建时间索引，方便后续匹配
+                temp_vals = {x.get("datetime"): x for x in hourly_data.get("temperature", [])}
+                skycon_vals = {x.get("datetime"): x for("value") for x in hourly_data.get("skycon", [])}
+                wind_vals = {x.get("datetime"): x for x in hourly_data.get("wind", [])}
+                humid_vals = {x.get("datetime"): x.get("value") for x in hourly_data.get("humidity", [])}
+                precip_vals = {x.get("datetime"): x for x in hourly_data.get("precipitation", [])}
+                apparent_vals = {x.get("datetime"): x.get("value") for x in hourly_data.get("apparent_temperature", [])}
+
+                # 合并所有 datetime 键
+                all_dt = set(temp_vals.keys()) | set(skycon_vals.keys()) | set(wind_vals.keys())
+
+                for dt_str in sorted(all_dt):
+                    temp_info = temp_vals.get(dt_str, {})
+                    sky = skycon_vals.get(dt_str, "CLEAR_DAY")
+                    w = wind_vals.get(dt_str, {})
+                    humid = humid_vals.get(dt_str)
+                    precip = precip_vals.get(dt_str, {})
+                    apparent = apparent_vals.get(dt_str)
+
                     hourly_forecast.append({
                         "datetime": dt_str,
-                        "temperature": item.get("value", "N/A"),
+                        "temperature": temp_info.get("value", "N/A"),
+                        "apparent_temperature": apparent if apparent is not None else "N/A",
                         "weather": cls.SKYCON_MAP.get(sky, sky),
                         "skycon": sky,
                         "wind_direction": cls._get_wind_direction(w.get("direction")),
                         "wind_power": cls._get_wind_power(w.get("speed", 0)),
+                        "wind_speed": w.get("speed", 0),
                         "humidity": str(round(humid * 100)) if humid is not None else "N/A",
+                        "precipitation": precip.get("value", 0),
+                        "precip_probability": precip.get("probability", 0),
                     })
 
-                # 解析每日预报（最高/最低温）
+                # 解析每日预报(最高/最低温 + 日出日落 + 白天/夜间细分 + 生活指数)
                 daily_data = result.get("daily", {})
                 if daily_data:
                     weather_data["forecast"] = {"city": city_name, "casts": []}
+
+                    # 预构建索引
+                    astro_list   = daily_data.get("astro", [])
+                    skycon_0820  = daily_data.get("skycon_08h_20h", [])
+                    skycon_2032  = daily_data.get("skycon_20h_32h", [])
+                    temp_0820    = daily_data.get("temperature_08h_20h", [])
+                    temp_2032    = daily_data.get("temperature_20h_32h", [])
+                    precip_0820  = daily_data.get("precipitation_08h_20h", [])
+                    precip_2032  = daily_data.get("precipitation_20h_32h", [])
+                    life_index   = daily_data.get("life_index", {})
+
                     for i, cast in enumerate(daily_data.get("temperature", [])):
                         if i >= 3:
                             break
                         skycons = daily_data.get("skycon", [])
                         day_sky = skycons[i].get("value", "") if i < len(skycons) else ""
-                        weather_data["forecast"]["casts"].append({
+
+                        cast_data = {
                             "date": cast.get("date", ""),
                             "day_temp": str(cast.get("max", "N/A")),
                             "night_temp": str(cast.get("min", "N/A")),
                             "day_weather": cls.SKYCON_MAP.get(day_sky, day_sky),
                             "skycon": day_sky,
-                        })
+                        }
+
+                        # 日出日落
+                        if i < len(astro_list):
+                            astro = astro_list[i]
+                            cast_data["sunrise"] = astro.get("sunrise", {}).get("time", "")
+                            cast_data["sunset"] = astro.get("sunset", {}).get("time", "")
+
+                        # 白天天气(08-20时)
+                        if i < len(skycon_0820):
+                            sky08 = skycon_0820[i].get("value", "")
+                            cast_data["skycon_08h_20h"] = sky08
+                            cast_data["daytime_weather"] = cls.SKYCON_MAP.get(sky08, sky08)
+                        # 夜间天气(20-次日08时)
+                        if i < len(skycon_2032):
+                            sky20 = skycon_2032[i].get("value", "")
+                            cast_data["skycon_20h_32h"] = sky20
+                            cast_data["nighttime_weather"] = cls.SKYCON_MAP.get(sky20, sky20)
+
+                        # 白天/夜间温度细分
+                        if i < len(temp_0820):
+                            cast_data["temp_08h_20h_max"] = str(temp_0820[i].get("max", ""))
+                            cast_data["temp_08h_20h_min"] = str(temp_0820[i].get("min", ""))
+                        if i < len(temp_2032):
+                            cast_data["temp_20h_32h_max"] = str(temp_2032[i].get("max", ""))
+                            cast_data["temp_20h_32h_min"] = str(temp_2032[i].get("min", ""))
+
+                        # 白天/夜间降水概率
+                        if i < len(precip_0820):
+                            cast_data["precip_08h_20h_prob"] = precip_0820[i].get("probability", 0)
+                        if i < len(precip_2032):
+                            cast_data["precip_20h_32h_prob"] = precip_2032[i].get("probability", 0)
+
+                        # 生活指数
+                        for key, label in [("ultraviolet", "紫外线"), ("dressing", "穿衣"),
+                                            ("comfort", "舒适度"), ("coldRisk", "感冒"),
+                                            ("carWashing", "洗车")]:
+                            idx_list = life_index.get(key, [])
+                            if i < len(idx_list):
+                                idx_item = idx_list[i]
+                                cast_data[f"life_{key}"] = {"index": idx_item.get("index", ""), "desc": idx_item.get("desc", "")}
+
+                        weather_data["forecast"]["casts"].append(cast_data)
 
             weather_data["hourly_forecast"] = hourly_forecast
             return weather_data
@@ -249,7 +321,7 @@ class WeatherAPI:
             if geo and geo.get("adcode"):
                 city_code = geo["adcode"]
             else:
-                return {"success": False, "error": "经纬度解析失败，无法获取对应城市信息"}
+                return {"success": False, "error": "经纬度解析失败,无法获取对应城市信息"}
 
         params["city"] = city_code
 

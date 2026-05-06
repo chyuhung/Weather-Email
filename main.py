@@ -46,11 +46,16 @@ def main():
         if not CAIYUN_TOKEN:
             print("❌ 彩云 API Token 缺失！请设置环境变量 CAIYUN_TOKEN")
             return
+        # 早间模式：只需要今天的小时数据（24小时足够覆盖今日06-23点）
+        # 晚间模式：需要明天的小时数据（32小时覆盖到明天23点）
+        hourlysteps = 24 if args.mode == "morning" else 32
+        dailysteps = 1 if args.mode == "morning" else 2
         weather = CaiyunAPI.get_weather(
             LOCATION, CAIYUN_TOKEN,
             gaode_key=GAODE_KEY,
             extensions="all",
-            hourlysteps=48
+            hourlysteps=hourlysteps,
+            dailysteps=dailysteps
         )
     else:
         if not GAODE_KEY:
