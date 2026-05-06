@@ -1,2 +1,5 @@
 .env
 __pycache__/*
+*.bat
+test_*
+debug_*

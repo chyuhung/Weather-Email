@@ -372,10 +372,13 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
     # ── 卡片渲染 ────────────────────────────────────────────────────────────
     def _slot_html(item: dict, label: str, is_highlight=False) -> str:
         if not item:
+            # 没有小时数据时直接显示暂无数据
             return f"""
-        <div class="card{' highlight' if is_highlight else ''}" style="opacity:.55">
+        <div class="card{' highlight' if is_highlight else ''}" style="opacity:.45">
             <div class="card-label">{label}</div>
-            <div class="card-main">暂无数据</div>
+            <div class="card-main">
+                <span class="big-temp" style="font-size:14px;color:#999">暂无数据</span>
+            </div>
         </div>"""
         sky = item.get("skycon", item.get("weather", ""))
         icon = _sky_icon(sky)
@@ -501,7 +504,7 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
 
   <div class="section">
     <div class="card-grid">
-      {_slot_html(slots.get("morning"), '上午', mode == "morning")}
+      {_slot_html(slots.get("morning"), '上午', is_highlight=mode == "morning")}
       {_slot_html(slots.get("afternoon"), '下午')}
       {_slot_html(slots.get("night"), '晚间')}
     </div>
