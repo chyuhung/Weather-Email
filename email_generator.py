@@ -328,28 +328,20 @@ def generate_html(weather: dict, mode: str = "evening") -> tuple[str, str]:
         target_day_temp = "?"
         target_night_temp = "?"
 
+    # Hero 卡片：只取天气图标和天气描述（优先用上午小时数据），风数据移到三卡片中展示
     hero_morning = slots.get("morning")
     if hero_morning:
         hero_icon = _sky_icon(hero_morning.get("skycon", hero_morning.get("weather", "")))
         hero_weather = hero_morning.get("weather", "")
-        hero_wind_dir = hero_morning.get("wind_direction", "—")
-        hero_wind_pow = hero_morning.get("wind_power", "—")
         hero_humidity = hero_morning.get("humidity", "")
     else:
         hero_icon = _sky_icon(target_skycon) if target_skycon else "🌤️"
         hero_weather = target_cast.get("day_weather", "") if target_cast else ""
-        hero_wind_dir = "—"
-        hero_wind_pow = "—"
         hero_humidity = ""
 
     hero_extra_html = ""
-    if hero_wind_dir != "—" or hero_humidity:
-        parts = []
-        if hero_humidity and hero_humidity not in ("N/A", ""):
-            parts.append(f"💧 {hero_humidity}%")
-        if hero_wind_dir != "—":
-            parts.append(f"🍃 {hero_wind_dir} {hero_wind_pow}级")
-        hero_extra_html = f'<div class="hero-meta">{"<span>" + "</span><span>".join(parts) + "</span>"}</div>'
+    if hero_humidity and hero_humidity not in ("N/A", ""):
+        hero_extra_html = f'<div class="hero-meta"><span>💧 {hero_humidity}%</span></div>'
 
     hero_card = f"""
         <div class="card hero">
