@@ -775,14 +775,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     font-size: 13px; color: #999; letter-spacing: 1px; text-transform: uppercase;
   }}
 
-  /* ── 天气关键点 ── */
-  .keypoint {{
-    background: linear-gradient(135deg, {accent_bg} 0%, rgba(255,255,255,.6) 100%);
-    border-left: 4px solid {accent_color};
-    margin: 0 24px; padding: 12px 18px;
-    border-radius: 0 12px 12px 0;
+  /* ── 天气关键点（内嵌 Hero 底部） ── */
+  .hero-keypoint {{
+    margin-top: 14px; padding: 10px 14px;
+    background: rgba(0,0,0,.03); border-radius: 10px;
+    border-left: 3px solid {accent_color};
   }}
-  .keypoint-text {{ font-size: 14px; color: #333; line-height: 1.7; }}
+  .hero-keypoint-text {{ font-size: 13px; color: #555; line-height: 1.7; }}
 
   /* ── 分段天气卡片 ── */
   .card-container {{ padding: 12px 24px 10px; }}
@@ -887,11 +886,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       {hero_sun_str}
       {hero_live_temp}
     </div>
-  </div>
-
-  <!-- 天气关键点 -->
-  <div class="keypoint">
-    <div class="keypoint-text">{keypoint}</div>
+    <div class="hero-keypoint">
+      <div class="hero-keypoint-text">{keypoint}</div>
+    </div>
   </div>
 
   <!-- 分时段预报 -->
