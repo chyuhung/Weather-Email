@@ -809,8 +809,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     padding: 12px 24px;
   }}
   .info-row {{
-    padding: 6px 0; display: flex; flex-wrap: wrap;
-    gap: 4px 16px; font-size: 12px; color: #888;
+    padding: 6px 24px; font-size: 12px; color: #888; line-height: 2;
   }}
   .info-label {{
     font-size: 11px; color: #999; margin-bottom: 8px;
