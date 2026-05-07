@@ -636,9 +636,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
             live_extras = f'<div class="info-row">{" &nbsp;|&nbsp; ".join(extras_items)}</div>'
 
     # ---- 生活指数 ----
-    life_html = ""
+    life_items: list[str] = []
+    life_tags_html = ""
     if target_cast:
-        life_items: list[str] = []
         life_icons = {
             "ultraviolet": "☀️",
             "dressing": "👔",
@@ -652,13 +652,8 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
                 desc = life_data.get("desc", "")
                 if desc:
                     life_items.append(f'<span class="life-tag">{icon} {desc}</span>')
-
         if life_items:
-            life_html = f"""
-            <div class="info-section">
-                <div class="info-label">📋 生活指数</div>
-                <div class="life-grid">{''.join(life_items)}</div>
-            </div>"""
+            life_tags_html = ''.join(life_items)
 
     # ---- 卡片渲染函数 ----
     def _slot_html(item: Optional[dict], label: str, is_highlight: bool = False) -> str:
@@ -841,13 +836,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* ── 着装建议 ── */
   .clothing {{
-    background: linear-gradient(135deg, #F2FAF2 0%, #EAF6EA 100%);
-    border-left: 4px solid #67C23A;
-    margin: 14px 24px; padding: 14px 18px;
-    border-radius: 0 12px 12px 0;
+    background: #F6FBF6;
+    border-left: 3px solid #67C23A;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px; margin-top: 4px;
   }}
-  .clothing-brief {{ font-size: 14px; color: #333; line-height: 1.5; font-weight: 600; }}
-  .clothing-detail {{ font-size: 12px; color: #888; margin-top: 4px; line-height: 1.6; }}
+  .clothing-brief {{ font-size: 13px; color: #333; line-height: 1.5; font-weight: 600; }}
+  .clothing-detail {{ font-size: 12px; color: #888; margin-top: 3px; line-height: 1.6; }}
 
   /* ── 底部 ── */
   .footer {{
@@ -907,13 +902,14 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   <!-- 实况次要信息 -->
   {live_extras}
 
-  <!-- 生活指数 -->
-  {life_html}
-
-  <!-- 着装建议 -->
-  <div class="clothing">
-    <div class="clothing-brief">{clothing_brief}</div>
-    <div class="clothing-detail">{clothing_detail}（{temp_min:.0f}~{temp_max:.0f}℃）</div>
+  <!-- 生活指数 & 着装建议 -->
+  <div class="info-section" style="border-bottom:none">
+    <div class="info-label">📋 生活指数</div>
+    <div class="life-grid">{life_tags_html}</div>
+    <div class="clothing">
+      <div class="clothing-brief">{clothing_brief}</div>
+      <div class="clothing-detail">{clothing_detail}（{temp_min:.0f}~{temp_max:.0f}℃）</div>
+    </div>
   </div>
 
   <!-- 底部 -->
