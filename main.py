@@ -28,7 +28,7 @@ def _load_env() -> dict[str, str | None]:
         "CAIYUN_TOKEN": os.getenv("CAIYUN_TOKEN"),
         "EMAIL_SENDER": os.getenv("EMAIL_SENDER"),
         "EMAIL_AUTH_CODE": os.getenv("EMAIL_AUTH_CODE"),
-        "EMAIL_RECEIVERS": os.getenv("EMAIL_RECEIVERS") or os.getenv("EMAIL_RECEIVER") or "",
+        "EMAIL_RECEIVER": os.getenv("EMAIL_RECEIVERS") or os.getenv("EMAIL_RECEIVER") or "",
         "LOCATION": os.getenv("LOCATION"),
     }
 
