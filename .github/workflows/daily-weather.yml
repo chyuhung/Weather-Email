@@ -2,9 +2,9 @@ name: 天气邮件推送（早晚双时段）
 
 on:
   # schedule:
-    # # 晚间推送：UTC 14:00 = 北京时间 22:00
+    # 晚间推送：UTC 14:00 = 北京时间 22:00（推送明日天气）
     # - cron: "0 14 * * *"
-    # # 早间推送：UTC 23:00 = 北京时间 07:00
+    # 早间推送：UTC 23:00 = 北京时间 07:00（推送今日天气）
     # - cron: "0 23 * * *"
   workflow_dispatch:
     # 手动触发时自动根据北京时间判断模式
@@ -24,7 +24,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests python-dotenv
 
       - name: Determine mode and run
         env:
@@ -33,6 +33,7 @@ jobs:
           EMAIL_SENDER:    ${{ secrets.EMAIL_SENDER }}
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER:  ${{ secrets.EMAIL_RECEIVER }}
+          EMAIL_RECEIVERS: ${{ secrets.EMAIL_RECEIVERS }}
           LOCATION:        ${{ secrets.LOCATION }}
         run: |
           BEIJING_HOUR=$(TZ='Asia/Shanghai' date +%H)
