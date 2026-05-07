@@ -736,7 +736,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* ── 顶栏 ── */
   .topbar {{
-    background: linear-gradient(135deg, {accent_color}, {accent_color}dd);
+    background: {accent_color};
     color: #fff; padding: 16px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }}
@@ -747,9 +747,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* ── Hero 概览卡片 ── */
   .hero {{
-    background: linear-gradient(180deg, {accent_bg} 0%, #fff 100%);
     padding: 28px 24px 22px; margin: 0;
-    border-bottom: 1px solid rgba(0,0,0,.05);
   }}
   .hero-top {{ display: flex; align-items: center; gap: 20px; margin-bottom: 14px; }}
   .hero-icon {{ font-size: 62px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
@@ -761,47 +759,44 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .hero-tags {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }}
   .hero-tag {{
     display: inline-block; font-size: 12px; color: #555;
-    background: rgba(0,0,0,.04); padding: 5px 14px; border-radius: 20px;
+    background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
   }}
 
-  /* ── 分隔标题 ── */
+  /* ── 小节标题 ── */
   .section-label {{
-    padding: 18px 24px 6px;
-    font-size: 13px; color: #999; letter-spacing: 1px; text-transform: uppercase;
+    padding: 18px 24px 8px;
+    font-size: 13px; color: #999; letter-spacing: 1px;
   }}
 
   /* ── 天气关键点（内嵌 Hero 底部） ── */
   .hero-keypoint {{
     margin-top: 14px; padding: 10px 14px;
-    background: rgba(0,0,0,.03); border-radius: 10px;
-    border-left: 3px solid {accent_color};
+    background: #F5F7FA; border-radius: 10px;
   }}
-  .hero-keypoint-text {{ font-size: 13px; color: #555; line-height: 1.7; }}
+  .hero-keypoint-text {{ font-size: 13px; color: #666; line-height: 1.7; }}
 
   /* ── 分段天气卡片 ── */
-  .card-container {{ padding: 12px 24px 10px; }}
+  .card-container {{ padding: 0 24px 8px; }}
   .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }}
   .card {{
-    background: #F7F9FC; border-radius: 16px;
+    background: #F5F7FA; border-radius: 16px;
     padding: 16px 12px; text-align: center;
-    border: 1.5px solid #E8ECF2;
+    border: 1px solid #EAEEF3;
     transition: all .15s ease;
   }}
   .card.highlight {{
     background: {accent_bg};
-    border-color: {accent_color}44;
-    box-shadow: 0 4px 16px rgba({accent_color}, .12);
+    border-color: {accent_color}33;
   }}
-  .card.rainy {{ background: #F5F6FA; border-color: #C9D1E0; }}
+  .card.rainy {{ background: #F0F2F7; }}
   .card-label {{
     font-size: 12px; color: #888; margin-bottom: 8px;
-    letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
+    letter-spacing: 2px; font-weight: 600;
   }}
   .slot-precip {{
     background: #fff; color: {accent_color}; border-radius: 12px;
     font-size: 11px; padding: 3px 10px; margin-bottom: 6px;
     display: inline-block; font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,.05);
   }}
   .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 4px; }}
   .big-icon {{ font-size: 32px; line-height: 1.15; }}
@@ -811,8 +806,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* ── 信息区域 ── */
   .info-section {{
-    padding: 10px 24px;
-    border-bottom: 1px solid #F0F2F5;
+    padding: 12px 24px;
   }}
   .info-row {{
     padding: 6px 0; display: flex; flex-wrap: wrap;
@@ -820,7 +814,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .info-label {{
     font-size: 11px; color: #999; margin-bottom: 8px;
-    letter-spacing: 1px; text-transform: uppercase;
+    letter-spacing: 1px;
   }}
   .info-content {{ font-size: 13px; color: #555; line-height: 1.6; }}
 
@@ -830,16 +824,14 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .life-tag {{
     display: inline-block; font-size: 13px; color: #555;
-    background: #F7F9FC; border: 1px solid #E8ECF2;
-    padding: 5px 14px; border-radius: 20px;
+    background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
   }}
 
   /* ── 着装建议 ── */
   .clothing {{
-    background: #F6FBF6;
-    border-left: 3px solid #67C23A;
-    border-radius: 0 10px 10px 0;
-    padding: 10px 14px; margin-top: 4px;
+    background: #F5F7FA;
+    border-radius: 10px;
+    padding: 10px 14px; margin-top: 8px;
   }}
   .clothing-brief {{ font-size: 13px; color: #333; line-height: 1.5; font-weight: 600; }}
   .clothing-detail {{ font-size: 12px; color: #888; margin-top: 3px; line-height: 1.6; }}
@@ -848,7 +840,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .footer {{
     text-align: center; padding: 16px 24px 18px;
     font-size: 11px; color: #BBB; line-height: 1.65;
-    border-top: 1px solid #F0F2F5;
   }}
 </style>
 </head>
@@ -903,7 +894,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   {live_extras}
 
   <!-- 生活指数 & 着装建议 -->
-  <div class="info-section" style="border-bottom:none">
+  <div class="info-section">
     <div class="info-label">📋 生活指数</div>
     <div class="life-grid">{life_tags_html}</div>
     <div class="clothing">
