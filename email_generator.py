@@ -5,10 +5,37 @@
 - evening：推送明天（明日概览 + 关键点 + 三时段 + 生活指数 + 着装建议）
 - 小时预报按时段聚合（取中间小时为代表值，温度显示区间）
 - 生活指数区域展示紫外线、穿衣、舒适度、感冒风险、洗车建议
+- 统一、自然的大气配色方案
 """
 
 from datetime import datetime, timedelta
 from typing import Any, Optional
+
+
+# ================================================================
+#  配色方案（自然大气风格）
+# ================================================================
+COLOR_THEME = {
+    "sunny": {"primary": "#4A90D9", "bg": "#EEF6FF", "gradient": "#4A90D9"},
+    "rainy": {"primary": "#5B7BA3", "bg": "#EDF1F7", "gradient": "#6B8299"},
+    "cloudy": {"primary": "#7C8DA5", "bg": "#F3F4F6", "gradient": "#8E9DAD"},
+    "extreme": {"primary": "#E8745C", "bg": "#FEF0ED", "gradient": "#E8745C"},
+}
+
+
+def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float) -> dict:
+    """根据天气状况智能选择配色主题"""
+    if any_rain:
+        return COLOR_THEME["rainy"]
+    if temp_max >= 35:
+        return COLOR_THEME["extreme"]
+    for key in ["morning", "afternoon", "night"]:
+        item = slots.get(key)
+        if item:
+            sky = item.get("skycon", item.get("weather", "")).upper()
+            if "CLOUD" in sky or "OVERCAST" in sky:
+                return COLOR_THEME["cloudy"]
+    return COLOR_THEME["sunny"]
 
 
 # ================================================================
@@ -462,9 +489,10 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     # ======================== HTML 正文 ========================
 
-    # ---- 配色方案 ----
-    accent_color = "#e74c3c" if any_rain else "#2c98f0"
-    accent_bg = "#fdf0ef" if any_rain else "#edf6ff"
+    # 获取智能配色主题
+    theme = _get_weather_theme(slots, any_rain, temp_max)
+    accent_color = theme["primary"]
+    accent_bg = theme["bg"]
 
     # ---- Hero 卡片数据 ----
     if target_cast:
