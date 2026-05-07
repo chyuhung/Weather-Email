@@ -655,7 +655,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
         if life_items:
             life_html = f"""
-            <div class="life-section">
+            <div class="info-section">
                 <div class="info-label">📋 生活指数</div>
                 <div class="life-grid">{''.join(life_items)}</div>
             </div>"""
@@ -831,15 +831,11 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .info-content {{ font-size: 13px; color: #555; line-height: 1.6; }}
 
   /* ── 生活指数 ── */
-  .life-container {{
-    padding: 12px 24px 6px;
-    border-bottom: 1px solid #F0F2F5;
-  }}
   .life-grid {{
     display: flex; flex-wrap: wrap; gap: 8px;
   }}
   .life-tag {{
-    display: inline-block; font-size: 12px; color: #555;
+    display: inline-block; font-size: 13px; color: #555;
     background: #F7F9FC; border: 1px solid #E8ECF2;
     padding: 5px 14px; border-radius: 20px;
   }}
