@@ -10,7 +10,7 @@ import os
 import sys
 from config import SMTP_SERVER, SMTP_PORT, SENDER_NAME, WEATHER_SOURCE
 from weather_api import WeatherAPI, CaiyunAPI
-from email_sender import send_email
+from email_sender import send_email, _normalize_receivers
 from email_generator import generate_html
 
 # 本地开发环境加载 .env 文件（生产环境不需要）
@@ -28,7 +28,7 @@ def _load_env() -> dict[str, str | None]:
         "CAIYUN_TOKEN": os.getenv("CAIYUN_TOKEN"),
         "EMAIL_SENDER": os.getenv("EMAIL_SENDER"),
         "EMAIL_AUTH_CODE": os.getenv("EMAIL_AUTH_CODE"),
-        "EMAIL_RECEIVERS": os.getenv("EMAIL_RECEIVERS") or os.getenv("EMAIL_RECEIVER") or "",
+        "EMAIL_RECEIVERS": os.getenv("EMAIL_RECEIVERS") or "",
         "LOCATION": os.getenv("LOCATION"),
     }
 
@@ -139,25 +139,36 @@ def main():
         print(f"   可用浏览器打开该文件预览邮件效果")
         return
 
-    # ========== 发送邮件 ==========
-    print("📤 发送邮件中...")
+    # ========== 发送邮件（逐封单独发送） ==========
+    receivers = _normalize_receivers(config["EMAIL_RECEIVERS"])
+    if not receivers:
+        print("❌ 没有有效的收件人地址")
+        sys.exit(1)
 
-    ok = send_email(
-        sender=config["EMAIL_SENDER"],
-        auth_code=config["EMAIL_AUTH_CODE"],
-        receiver=config["EMAIL_RECEIVERS"],
-        subject=subject,
-        content=html_body,
-        smtp_server=SMTP_SERVER,
-        smtp_port=SMTP_PORT,
-        sender_name=SENDER_NAME,
-        is_html=True,
-    )
+    print(f"📤 正在发送 {len(receivers)} 封邮件...")
+    failed = 0
+    for addr in receivers:
+        ok = send_email(
+            sender=config["EMAIL_SENDER"],
+            auth_code=config["EMAIL_AUTH_CODE"],
+            receiver=addr.strip(),
+            subject=subject,
+            content=html_body,
+            smtp_server=SMTP_SERVER,
+            smtp_port=SMTP_PORT,
+            sender_name=SENDER_NAME,
+            is_html=True,
+        )
+        if ok:
+            print(f"   ✅ → {addr}")
+        else:
+            print(f"   ❌ → {addr}")
+            failed += 1
 
-    if ok:
-        print("✅ 邮件发送成功！")
+    if failed == 0:
+        print(f"✅ 全部 {len(receivers)} 封邮件发送成功！")
     else:
-        print("❌ 邮件发送失败！")
+        print(f"⚠️ 发送完成：{len(receivers) - failed}/{len(receivers)} 成功，{failed} 封失败")
         sys.exit(1)
 
 

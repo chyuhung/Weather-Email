@@ -51,8 +51,7 @@ Weather-Email/
 | `GAODE_KEY` | 建议填写 | 高德地图 Key（用于城市名反查） | — |
 | `EMAIL_SENDER` | **必填** | 发件人邮箱 | — |
 | `EMAIL_AUTH_CODE` | **必填** | 邮箱授权码（非登录密码） | — |
-| `EMAIL_RECEIVER` | **必填** | 收件人邮箱（单人） | — |
-| `EMAIL_RECEIVERS` | 可选 | 多收件人（逗号分隔，优先于 RECEIVER） | — |
+| `EMAIL_RECEIVERS` | **必填** | 收件人（支持多人，逗号分隔，每位单独发送） | — |
 | `WEATHER_SOURCE` | 可选 | 天气数据源 | `caiyun` |
 | `SENDER_NAME` | 可选 | 发件人显示名称 | `Weather-Email` |
 | `SMTP_SERVER` | 可选 | SMTP 服务器 | `smtp.exmail.qq.com` |
@@ -86,7 +85,7 @@ WEATHER_SOURCE=caiyun
 # 邮件
 EMAIL_SENDER=sender@example.com
 EMAIL_AUTH_CODE=your-auth-code-here
-EMAIL_RECEIVER=receiver@example.com
+EMAIL_RECEIVERS=user1@example.com,user2@example.com
 ```
 
 > `.env` 文件不会被提交到 Git（已在 `.gitignore` 中忽略）。
@@ -136,8 +135,7 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
 | `GAODE_KEY` | 高德地图 Key |
 | `EMAIL_SENDER` | 发件人邮箱 |
 | `EMAIL_AUTH_CODE` | 邮箱授权码 |
-| `EMAIL_RECEIVER` | 收件人邮箱 |
-| `EMAIL_RECEIVERS` | 多收件人（可选） |
+| `EMAIL_RECEIVERS` | 收件人（支持多人，逗号分隔） |
 
 3. **定时任务**自动运行：
    - 早间推送：每天北京时间 07:00（推送今日天气）
