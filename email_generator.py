@@ -450,6 +450,17 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     )
 
     # ---- 邮件主题 ----
+    # 温度范围使用每日预报的 day_temp/night_temp，与 Hero 大卡片保持一致
+    subject_temp_min, subject_temp_max = temp_min, temp_max
+    if target_cast:
+        dt = target_cast.get("day_temp")
+        nt = target_cast.get("night_temp")
+        if dt is not None and nt is not None:
+            try:
+                subject_temp_min, subject_temp_max = float(nt), float(dt)
+            except (ValueError, TypeError):
+                pass
+
     primary_sky = ""
     for key in ["morning", "afternoon", "night"]:
         item = slots.get(key)
@@ -482,7 +493,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
                 pass
 
     alert_str = " ".join(alert_tags)
-    subject_parts = [f"{weather_emoji}{temp_min:.0f}~{temp_max:.0f}℃"]
+    subject_parts = [f"{weather_emoji}{subject_temp_min:.0f}~{subject_temp_max:.0f}℃"]
     if alert_str:
         subject_parts.append(alert_str)
     subject = " · ".join(subject_parts)
