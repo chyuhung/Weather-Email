@@ -8,19 +8,36 @@
 - 统一、自然的大气配色方案
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+BEIJING_TZ = timezone(timedelta(hours=8))
 
 
-# ================================================================
-#  配色方案（自然大气风格）
-# ================================================================
 COLOR_THEME = {
     "sunny": {"primary": "#4A90D9", "bg": "#EEF6FF", "gradient": "#4A90D9"},
     "rainy": {"primary": "#5B7BA3", "bg": "#EDF1F7", "gradient": "#6B8299"},
     "cloudy": {"primary": "#7C8DA5", "bg": "#F3F4F6", "gradient": "#8E9DAD"},
     "extreme": {"primary": "#E8745C", "bg": "#FEF0ED", "gradient": "#E8745C"},
 }
+
+
+def _beijing_now() -> datetime:
+    """返回北京时间的当前时间。"""
+    return datetime.now(BEIJING_TZ)
+
+
+def _parse_beijing_datetime(dt_str: str) -> Optional[datetime]:
+    """将 API 返回的时间字符串统一解析为北京时间。"""
+    if not dt_str:
+        return None
+    try:
+        cleaned = dt_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(cleaned)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=BEIJING_TZ)
+        return dt.astimezone(BEIJING_TZ)
+    except (ValueError, TypeError):
+        return None
 
 
 def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float) -> dict:
@@ -279,10 +296,8 @@ def _slice_hourly(hourly: list[dict[str, Any]], target_date: str) -> dict[str, O
         dt_str = item.get("datetime", "")
         if not dt_str:
             continue
-        try:
-            # 处理 +08:00 时区后缀
-            dt = datetime.fromisoformat(dt_str.replace("+08:00", "").replace("Z", ""))
-        except (ValueError, TypeError):
+        dt = _parse_beijing_datetime(dt_str)
+        if dt is None:
             continue
 
         if dt.strftime("%Y-%m-%d") != target_date:
@@ -366,7 +381,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     source = weather.get("source", "unknown")
     forecast_keypoint = weather.get("forecast_keypoint", "")
     hourly_description = weather.get("hourly_description", "")
-    now = datetime.now()
+    now = _beijing_now()
     today_str = now.strftime("%Y-%m-%d")
     tomorrow_str = (now + timedelta(days=1)).strftime("%Y-%m-%d")
 

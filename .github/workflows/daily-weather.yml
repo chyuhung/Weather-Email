@@ -11,6 +11,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TZ: Asia/Shanghai
 
 jobs:
   send-weather:
@@ -34,8 +35,9 @@ jobs:
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVERS: ${{ secrets.EMAIL_RECEIVERS }}
           LOCATION:        ${{ secrets.LOCATION }}
+          TZ:              Asia/Shanghai
         run: |
-          BEIJING_HOUR=$(TZ='Asia/Shanghai' date +%H)
+          BEIJING_HOUR=$(date +%H)
           echo "Current Beijing hour: $BEIJING_HOUR"
 
           if [ "$BEIJING_HOUR" -ge 6 ] && [ "$BEIJING_HOUR" -lt 14 ]; then

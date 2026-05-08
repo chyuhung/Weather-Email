@@ -20,10 +20,13 @@
 """
 
 import re
-from datetime import datetime
+import requests
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
-import requests
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+
 
 
 # ================================================================
@@ -229,7 +232,7 @@ class CaiyunAPI:
                     "cloudrate": round(realtime.get("cloudrate", 0) * 100),      # 百分比
                     "report_time": datetime.fromtimestamp(
                         data.get("server_time", 0)
-                    ).strftime("%Y-%m-%d %H:%M"),
+                    ).astimezone(BEIJING_TZ).strftime("%Y-%m-%d %H:%M"),
                 }
 
                 # 实况降水信息

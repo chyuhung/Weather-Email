@@ -146,6 +146,8 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
    - 早间推送：每天北京时间 07:00（推送今日天气）
    - 傍晚推送：每天北京时间 22:00（推送明日天气）
 
+   > 注意：workflow 触发器本身按 UTC 计时，但脚本会在运行时按北京时间自动选择 morning / evening 模式；仓库里的 workflow 也已显式设置 `TZ=Asia/Shanghai` 作为基线。
+
 4. **手动触发**：在 Actions 页面点击 `Run workflow`，自动根据北京时间选择模式
 
 ---
