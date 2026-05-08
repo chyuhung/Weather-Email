@@ -593,7 +593,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         if aqi_val is not None:
             aqi_color = _aqi_color(aqi_val)
             aqi_label = _aqi_label(aqi_val)
-            parts = [f'<span style="color:{aqi_color};font-weight:700">AQI {int(aqi_val)} {aqi_label}</span>']
+            parts = [f'<span class="aqi-main" style="color:{aqi_color}">AQI {int(aqi_val)} {aqi_label}</span>']
             if pm25_val is not None:
                 parts.append(f"PM2.5 {int(pm25_val)}")
             if pm10_val is not None:
@@ -624,7 +624,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
                     if aqi_val is not None:
                         aqi_color = _aqi_color(aqi_val)
                         aqi_label = _aqi_label(aqi_val)
-                        parts = [f'<span style="color:{aqi_color};font-weight:700">AQI {int(aqi_val)} {aqi_label}</span>']
+                        parts = [f'<span class="aqi-main" style="color:{aqi_color}">AQI {int(aqi_val)} {aqi_label}</span>']
                         if pm25_avg is not None:
                             parts.append(f"PM2.5 {int(pm25_avg)}")
                         aqi_html = f'<div class="info-section"><div class="info-label">🍃 预计空气质量</div><div class="info-content">{" &nbsp;·&nbsp; ".join(parts)}</div></div>'
@@ -678,7 +678,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         <div class="card" style="opacity:.4">
             <div class="card-label">{label}</div>
             <div class="card-main">
-                <span class="big-temp" style="font-size:13px;color:#999">暂无数据</span>
+                <span class="empty-temp">暂无数据</span>
             </div>
         </div>"""
 
@@ -738,10 +738,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(180deg, #F0F4FA 0%, #E4ECF5 100%);
+    color: #1f2937;
     min-height: 100vh; padding: 20px;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
   }}
   .wrap {{
     max-width: 500px; margin: 0 auto; background: #fff;
@@ -755,32 +758,33 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     color: #fff; padding: 16px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }}
-  .topbar-title {{ font-size: 17px; font-weight: 600; letter-spacing: 1px; }}
-  .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.5; }}
+  .topbar-title {{ font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1.2; }}
+  .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.4; }}
   .topbar-date {{ display: block; letter-spacing: .5px; }}
-  .topbar-city {{ display: block; opacity: .75; font-size: 11px; margin-top: 2px; }}
+  .topbar-city {{ display: block; opacity: .78; font-size: 11px; margin-top: 2px; line-height: 1.2; }}
 
   /* ── Hero 概览卡片 ── */
   .hero {{
     padding: 28px 24px 22px; margin: 0;
   }}
   .hero-top {{ display: flex; align-items: center; gap: 20px; margin-bottom: 14px; }}
-  .hero-icon {{ font-size: 62px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
+  .hero-icon {{ font-size: 58px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
   .hero-info {{ flex: 1; }}
-  .hero-temp {{ font-size: 46px; font-weight: 700; color: #1a1a1a; line-height: 1.15; }}
-  .hero-temp .night {{ color: #666; font-weight: 500; font-size: 32px; }}
-  .hero-temp .sep {{ color: #bbb; font-weight: 300; margin: 0 4px; }}
-  .hero-weather {{ font-size: 18px; color: #555; margin-top: 4px; letter-spacing: 1px; }}
+  .hero-temp {{ font-size: 40px; font-weight: 700; color: #1f2937; line-height: 1.08; letter-spacing: -.5px; }}
+  .hero-temp .night {{ color: #6b7280; font-weight: 500; font-size: 28px; }}
+  .hero-temp .sep {{ color: #c0c6d0; font-weight: 300; margin: 0 4px; }}
+  .hero-weather {{ font-size: 16px; color: #4b5563; margin-top: 4px; letter-spacing: .5px; line-height: 1.35; }}
   .hero-tags {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }}
   .hero-tag {{
-    display: inline-block; font-size: 12px; color: #555;
+    display: inline-block; font-size: 12px; color: #556070;
     background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
+    line-height: 1.3;
   }}
 
   /* ── 小节标题 ── */
   .section-label {{
     padding: 18px 24px 8px;
-    font-size: 13px; color: #999; letter-spacing: 1px;
+    font-size: 12px; color: #8f98a6; letter-spacing: 1px;
   }}
 
   /* ── 天气关键点（内嵌 Hero 底部） ── */
@@ -788,7 +792,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     margin-top: 14px; padding: 10px 14px;
     background: #F5F7FA; border-radius: 10px;
   }}
-  .hero-keypoint-text {{ font-size: 13px; color: #666; line-height: 1.7; }}
+  .hero-keypoint-text {{ font-size: 13px; color: #5f6673; line-height: 1.65; }}
 
   /* ── 分段天气卡片 ── */
   .card-container {{ padding: 0 24px 8px; }}
@@ -805,18 +809,18 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .card.rainy {{ background: #F0F2F7; }}
   .card-label {{
-    font-size: 12px; color: #888; margin-bottom: 8px;
-    letter-spacing: 2px; font-weight: 600;
+    font-size: 11px; color: #8f98a6; margin-bottom: 8px;
+    letter-spacing: 2px; font-weight: 600; line-height: 1.2;
   }}
   .slot-precip {{
     background: #fff; color: {accent_color}; border-radius: 12px;
     font-size: 11px; padding: 3px 10px; margin-bottom: 6px;
-    display: inline-block; font-weight: 600;
+    display: inline-block; font-weight: 600; line-height: 1.2;
   }}
   .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 4px; }}
-  .big-icon {{ font-size: 32px; line-height: 1.15; }}
-  .big-temp {{ font-size: 23px; font-weight: 700; color: #1a1a1a; }}
-  .card-sub {{ font-size: 11px; color: #888; margin-top: 6px; line-height: 1.5; }}
+  .big-icon {{ font-size: 30px; line-height: 1.1; }}
+  .big-temp {{ font-size: 22px; font-weight: 700; color: #1f2937; line-height: 1.1; }}
+  .card-sub {{ font-size: 11px; color: #7b8594; margin-top: 6px; line-height: 1.45; }}
   .card-sub span {{ margin: 0 3px; }}
 
   /* ── 信息区域 ── */
@@ -824,21 +828,22 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     padding: 12px 24px;
   }}
   .info-row {{
-    padding: 6px 24px; font-size: 12px; color: #888; line-height: 2;
+    padding: 6px 24px; font-size: 12px; color: #7b8594; line-height: 1.8;
   }}
   .info-label {{
-    font-size: 11px; color: #999; margin-bottom: 8px;
-    letter-spacing: 1px;
+    font-size: 11px; color: #8f98a6; margin-bottom: 8px;
+    letter-spacing: 1px; line-height: 1.2;
   }}
-  .info-content {{ font-size: 13px; color: #555; line-height: 1.6; }}
+  .info-content {{ font-size: 13px; color: #4b5563; line-height: 1.6; }}
 
   /* ── 生活指数 ── */
   .life-grid {{
     display: flex; flex-wrap: wrap; gap: 8px;
   }}
   .life-tag {{
-    display: inline-block; font-size: 13px; color: #555;
+    display: inline-block; font-size: 12px; color: #556070;
     background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
+    line-height: 1.3;
   }}
 
   /* ── 着装建议 ── */
@@ -847,13 +852,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border-radius: 10px;
     padding: 10px 14px; margin-top: 8px;
   }}
-  .clothing-brief {{ font-size: 13px; color: #333; line-height: 1.5; font-weight: 600; }}
-  .clothing-detail {{ font-size: 12px; color: #888; margin-top: 3px; line-height: 1.6; }}
+  .clothing-brief {{ font-size: 13px; color: #2f3640; line-height: 1.5; font-weight: 600; }}
+  .clothing-detail {{ font-size: 12px; color: #7b8594; margin-top: 3px; line-height: 1.55; }}
 
   /* ── 底部 ── */
   .footer {{
     text-align: center; padding: 16px 24px 18px;
-    font-size: 11px; color: #BBB; line-height: 1.65;
+    font-size: 11px; color: #aab2bf; line-height: 1.6;
   }}
 </style>
 </head>
