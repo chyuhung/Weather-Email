@@ -59,9 +59,14 @@ Weather-Email/
 
 ---
 
-## 快速开始
+## Python 版本说明
 
-### 1. 安装依赖
+- **推荐版本：Python 3.12.x**
+- GitHub Actions 当前固定使用 **Python 3.12.10**
+- 本地开发建议同样使用 **Python 3.12 或更高版本**，以避免历史上出现过的语法兼容问题（例如 f-string 相关差异）
+
+> 如果你本地只能使用较低版本 Python，请先跑一次 `python --version` 和 `python main.py --dry-run` 做兼容性验证。
+
 
 ```bash
 pip install requests python-dotenv
