@@ -13,11 +13,73 @@ from typing import Any, Optional
 BEIJING_TZ = timezone(timedelta(hours=8))
 
 
+# ─────────────────────────────────────────────────────────────
+#  天气主题配色（高级专业风格）
+#  语义映射：晴天→天蓝系 | 多云→浅灰系 | 雨天→冷灰蓝系
+#           雪天→冰白淡蓝系 | 雾→暖灰系 | 风→青灰系
+#           雷暴→深紫灰系 | 高温→橙红系
+# ─────────────────────────────────────────────────────────────
 COLOR_THEME = {
-    "sunny": {"primary": "#4A90D9", "bg": "#EEF6FF", "gradient": "#4A90D9"},
-    "rainy": {"primary": "#5B7BA3", "bg": "#EDF1F7", "gradient": "#6B8299"},
-    "cloudy": {"primary": "#7C8DA5", "bg": "#F3F4F6", "gradient": "#8E9DAD"},
-    "extreme": {"primary": "#E8745C", "bg": "#FEF0ED", "gradient": "#E8745C"},
+    # ── 晴天 ── 天蓝渐变，清澈通透
+    "sunny": {
+        "primary":   "#1E88E5",   # 晴蓝主色
+        "bg":        "#E8F4FD",   # 天空浅底
+        "gradient":  "#64B5F6",   # 渐变延伸
+    },
+    # ── 多云 · 浅 ── 柔和中性灰
+    "cloudy_light": {
+        "primary":   "#78909C",   # 柔灰蓝
+        "bg":        "#ECEFF1",   # 淡灰底
+        "gradient":  "#B0BEC5",   # 灰调延伸
+    },
+    # ── 多云 · 深 ── 沉稳石墨灰
+    "cloudy_deep": {
+        "primary":   "#546E7A",   # 石墨灰
+        "bg":        "#CFD8DC",   # 冷灰底
+        "gradient":  "#78909C",   # 深灰延伸
+    },
+    # ── 雨天 · 轻 ── 薄雾冷蓝
+    "rainy_light": {
+        "primary":   "#4A7FA5",   # 冷雾蓝
+        "bg":        "#E3EBF2",   # 淡蓝灰底
+        "gradient":  "#6FA3C0",   # 蓝调延伸
+    },
+    # ── 雨天 · 重 ── 深邃墨蓝
+    "rainy_deep": {
+        "primary":   "#2C4F66",   # 墨蓝主色
+        "bg":        "#C8D9E6",   # 冷调底
+        "gradient":  "#3D6A8A",   # 深蓝延伸
+    },
+    # ── 雪天 ── 冰晶白蓝，清冷纯净
+    "snow": {
+        "primary":   "#5B8DB8",   # 冰蓝主色
+        "bg":        "#EEF4FA",   # 冰晶浅底
+        "gradient":  "#90B8D4",   # 霜白延伸
+    },
+    # ── 雾/霾 ── 暖调中性，略带暖灰紫
+    "fog": {
+        "primary":   "#7D8A97",   # 暖灰
+        "bg":        "#F0F2F4",   # 雾白底
+        "gradient":  "#A8B4C0",   # 灰调延伸
+    },
+    # ── 风/扬沙 ── 青灰色系
+    "wind": {
+        "primary":   "#5C8A8A",   # 青灰主色
+        "bg":        "#E6F0F0",   # 清冷底
+        "gradient":  "#7FA8A8",   # 风调延伸
+    },
+    # ── 雷暴 ── 深紫灰，压抑有力量感
+    "thunder": {
+        "primary":   "#5C4F7C",   # 深紫灰
+        "bg":        "#E8E6F2",   # 暗紫底
+        "gradient":  "#7A6FA0",   # 紫调延伸
+    },
+    # ── 高温极端 ── 橙红警示
+    "extreme": {
+        "primary":   "#D94F2B",   # 炽烈橙红
+        "bg":        "#FFF0EC",   # 热浪浅底
+        "gradient":  "#F07B52",   # 橙调延伸
+    },
 }
 
 
@@ -40,19 +102,126 @@ def _parse_beijing_datetime(dt_str: str) -> Optional[datetime]:
         return None
 
 
-def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float) -> dict:
-    """根据天气状况智能选择配色主题"""
-    if any_rain:
-        return COLOR_THEME["rainy"]
+def _theme_key_from_text(text: str) -> str:
+    """把天气文本归类到主题键。
+
+    优先级规则（按语义重要性）：
+    晴 > 雪 > 雨/雷暴 > 雾/霾 > 云/阴 > 风/扬沙
+    例如"晴间多云"主语义是晴，就用晴蓝主题，
+    "雨夹雪"主语义是雪，就用冰白主题。
+    "晴"在中文天气描述中永远是主天气。
+    """
+    if not text:
+        return "sunny"
+    s = str(text).upper()
+    # ── 晴 / 晴天（最高优先）──
+    if any(k in s for k in ("晴", "CLEAR", "SUNNY")):
+        return "sunny"
+    # ── 雪 ──
+    if any(k in s for k in ("雪", "SNOW", "冻雨")):
+        return "snow"
+    # ── 雷暴 / 雷雨（高降水优先）──
+    if any(k in s for k in ("雷暴", "雷阵雨", "THUNDER", "STORM")):
+        return "thunder"
+    # ── 雨 ──
+    if any(k in s for k in ("雨", "RAIN", "DRIZZLE", "SHOWERS", "SLEET", "HAIL", "降水")):
+        return "rainy"
+    # ── 雾 / 霾 / 沙尘 ──
+    if any(k in s for k in ("雾", "霾", "FOG", "HAZE", "SMOG", "沙尘", "扬沙")):
+        return "fog"
+    # ── 风 / 扬沙 ──
+    if any(k in s for k in ("风", "WIND", "大风")):
+        return "wind"
+    # ── 阴 / 多云 / 云 ──
+    if any(k in s for k in ("阴", "多云", "云", "CLOUD", "OVERCAST")):
+        return "cloudy"
+    return "sunny"
+
+
+def _theme_variant_from_text(text: str, family: str) -> str:
+    """根据文本判断同一主题族里的深浅版本。"""
+    if not text:
+        return "light"
+    s = str(text).upper()
+    if family == "cloudy":
+        return "deep" if any(k in s for k in ("阴", "阴天", "OVERCAST", "深多云")) else "light"
+    if family == "rainy":
+        return "deep" if any(k in s for k in (
+            "大", "暴雨", "HEAVY", "STORM", "THUNDER", "雷暴", "雷雨", "雷阵雨"
+        )) else "light"
+    if family == "snow":
+        return "deep" if any(k in s for k in ("大雪", "暴雪", "HEAVY_SNOW")) else "light"
+    if family == "thunder":
+        return "deep" if any(k in s for k in ("大", "HEAVY", "STORM", "雷暴")) else "light"
+    if family == "fog":
+        return "deep" if any(k in s for k in ("大雾", "浓雾", "重霾", "HEAVY_HAZE", "沙尘")) else "light"
+    if family == "wind":
+        return "deep" if any(k in s for k in ("大风", "狂风", "强风", "HEAVY_WIND")) else "light"
+    return "light"
+
+
+def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float, target_cast: Optional[dict] = None, hero_weather: str = "") -> dict:
+    """根据整天天气选择配色主题。
+
+    优先级：Hero 天气描述 > 日预报 > 小时预报兜底
+    主题族：sunny / cloudy / rainy / snow / thunder / fog / wind / extreme
+    """
     if temp_max >= 35:
         return COLOR_THEME["extreme"]
-    for key in ["morning", "afternoon", "night"]:
+
+    # 1. 主语义：Hero > 日预报 > 小时预报
+    family_source = hero_weather or ""
+    if not family_source and target_cast:
+        family_source = " ".join(str(target_cast.get(k, "")) for k in ("day_weather", "night_weather", "skycon"))
+    if not family_source:
+        for key in ("morning", "afternoon", "night"):
+            item = slots.get(key)
+            if item:
+                family_source = item.get("weather", item.get("skycon", ""))
+                if family_source:
+                    break
+
+    family = _theme_key_from_text(family_source)
+    variant = _theme_variant_from_text(family_source, family)
+
+    # 2. 按主题族直接返回
+    if family == "snow":
+        return COLOR_THEME["snow_deep"] if variant == "deep" else COLOR_THEME["snow"]
+    if family == "thunder":
+        return COLOR_THEME["thunder_deep"] if variant == "deep" else COLOR_THEME["thunder"]
+    if family == "rainy":
+        return COLOR_THEME["rainy_deep"] if (any_rain or variant == "deep") else COLOR_THEME["rainy_light"]
+    if family == "fog":
+        return COLOR_THEME["fog_deep"] if variant == "deep" else COLOR_THEME["fog"]
+    if family == "wind":
+        return COLOR_THEME["wind_deep"] if variant == "deep" else COLOR_THEME["wind"]
+    if family == "cloudy":
+        return COLOR_THEME["cloudy_deep"] if variant == "deep" else COLOR_THEME["cloudy_light"]
+    if family == "sunny":
+        return COLOR_THEME["sunny"]
+
+    # 3. 终极兜底：小时预报分布投票
+    scores = {"sunny": 0, "cloudy": 0, "rainy": 0, "snow": 0, "thunder": 0, "fog": 0, "wind": 0}
+    for key in ("morning", "afternoon", "night"):
         item = slots.get(key)
         if item:
-            sky = item.get("skycon", item.get("weather", "")).upper()
-            if "CLOUD" in sky or "OVERCAST" in sky:
-                return COLOR_THEME["cloudy"]
-    return COLOR_THEME["sunny"]
+            sky = item.get("skycon", item.get("weather", ""))
+            k = _theme_key_from_text(sky)
+            if k in scores:
+                scores[k] += 1
+    if any_rain:
+        scores["rainy"] += 1
+    fallback = max(scores, key=lambda kv: scores[kv])
+    FALLBACK_MAP = {
+        "snow":    COLOR_THEME["snow"],
+        "thunder": COLOR_THEME["thunder"],
+        "rainy":   COLOR_THEME["rainy_light"],
+        "fog":     COLOR_THEME["fog"],
+        "wind":    COLOR_THEME["wind"],
+        "cloudy":  COLOR_THEME["cloudy_light"],
+        "sunny":   COLOR_THEME["sunny"],
+    }
+    return FALLBACK_MAP.get(fallback, COLOR_THEME["sunny"])
 
 
 # ================================================================
@@ -515,12 +684,24 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     # ======================== HTML 正文 ========================
 
-    # 获取智能配色主题
-    theme = _get_weather_theme(slots, any_rain, temp_max)
+    # ---- Hero 卡片数据（必须先算，用于确定主题锚点）----
+    hero_morning = slots.get("morning")
+    if hero_morning:
+        hero_icon = _sky_icon(hero_morning.get("skycon", hero_morning.get("weather", "")))
+        hero_weather = hero_morning.get("weather", "")
+        hero_humidity = hero_morning.get("humidity")
+    else:
+        hero_icon = _sky_icon(target_skycon) if target_skycon else "🌤️"
+        hero_weather = target_cast.get("day_weather", "") if target_cast else ""
+        hero_humidity = None
+
+    # ======================== 主题色（锚定 Hero 天气文案）=======================
+    theme = _get_weather_theme(slots, any_rain, temp_max, target_cast=target_cast, hero_weather=hero_weather)
     accent_color = theme["primary"]
     accent_bg = theme["bg"]
+    accent_gradient = theme["gradient"]
 
-    # ---- Hero 卡片数据 ----
+    # 日预报基础数据（用于 Hero 温度 / 日出日落）
     if target_cast:
         target_skycon = target_cast.get("skycon", "")
         target_day_temp = target_cast.get("day_temp", "?")
@@ -533,17 +714,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         target_night_temp = "?"
         sunrise = ""
         sunset = ""
-
-    # 取上午小时数据作为 hero 天气描述
-    hero_morning = slots.get("morning")
-    if hero_morning:
-        hero_icon = _sky_icon(hero_morning.get("skycon", hero_morning.get("weather", "")))
-        hero_weather = hero_morning.get("weather", "")
-        hero_humidity = hero_morning.get("humidity")
-    else:
-        hero_icon = _sky_icon(target_skycon) if target_skycon else "🌤️"
-        hero_weather = target_cast.get("day_weather", "") if target_cast else ""
-        hero_humidity = None
 
     # 实况天气描述（仅早间模式用于 hero）
     live_weather = live.get("weather", "")
@@ -739,7 +909,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(180deg, #F0F4FA 0%, #E4ECF5 100%);
+    background: linear-gradient(180deg, {accent_bg} 0%, #FFFFFF 100%);
     color: #1f2937;
     min-height: 100vh; padding: 20px;
     -webkit-font-smoothing: antialiased;
@@ -754,14 +924,14 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* ── 顶栏 ── */
   .topbar {{
-    background: {accent_color};
+    background: linear-gradient(135deg, {accent_color} 0%, {accent_gradient} 100%);
     color: #fff; padding: 18px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }}
-  .topbar-title {{ font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1.15; }}
+  .topbar-title {{ font-size: 16px; font-weight: 700; letter-spacing: 1px; line-height: 1.15; }}
   .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.35; }}
   .topbar-date {{ display: block; letter-spacing: .5px; }}
-  .topbar-city {{ display: block; opacity: .78; font-size: 11px; margin-top: 3px; line-height: 1.15; }}
+  .topbar-city {{ display: block; opacity: .82; font-size: 11px; margin-top: 3px; line-height: 1.15; }}
 
   /* ── Hero 概览卡片 ── */
   .hero {{
@@ -770,21 +940,21 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .hero-top {{ display: flex; align-items: center; gap: 22px; margin-bottom: 16px; }}
   .hero-icon {{ font-size: 58px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
   .hero-info {{ flex: 1; }}
-  .hero-temp {{ font-size: 40px; font-weight: 700; color: #1f2937; line-height: 1.08; letter-spacing: -.5px; }}
-  .hero-temp .night {{ color: #6b7280; font-weight: 500; font-size: 28px; }}
-  .hero-temp .sep {{ color: #c0c6d0; font-weight: 300; margin: 0 4px; }}
-  .hero-weather {{ font-size: 16px; color: #4b5563; margin-top: 6px; letter-spacing: .5px; line-height: 1.35; }}
+  .hero-temp {{ font-size: 40px; font-weight: 700; color: {accent_color}; line-height: 1.08; letter-spacing: -.5px; }}
+  .hero-temp .night {{ color: {accent_color}cc; font-weight: 500; font-size: 28px; }}
+  .hero-temp .sep {{ color: {accent_color}88; font-weight: 300; margin: 0 4px; }}
+  .hero-weather {{ font-size: 16px; color: {accent_color}; margin-top: 6px; letter-spacing: .5px; line-height: 1.35; font-weight: 600; }}
   .hero-tags {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }}
   .hero-tag {{
-    display: inline-block; font-size: 12px; color: #556070;
-    background: #F5F7FA; padding: 6px 14px; border-radius: 20px;
+    display: inline-block; font-size: 12px; color: {accent_color};
+    background: {accent_bg}; padding: 6px 14px; border-radius: 20px;
     line-height: 1.25;
   }}
 
   /* ── 小节标题 ── */
   .section-label {{
     padding: 20px 24px 10px;
-    font-size: 12px; color: #8f98a6; letter-spacing: 1px;
+    font-size: 12px; color: {accent_color}; letter-spacing: 1px; font-weight: 600;
   }}
 
   /* ── 天气关键点（内嵌 Hero 底部） ── */
@@ -800,14 +970,15 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .card {{
     background: #F5F7FA; border-radius: 16px;
     padding: 18px 12px; text-align: center;
-    border: 1px solid #EAEEF3;
+    border: 1px solid {accent_color}22;
     transition: all .15s ease;
   }}
+  /* 时段卡片统一使用主题背景色 */
+  .card {{ background: {accent_bg}; }}
+
   .card.highlight {{
-    background: {accent_bg};
     border-color: {accent_color}33;
   }}
-  .card.rainy {{ background: #F0F2F7; }}
   .card-label {{
     font-size: 11px; color: #8f98a6; margin-bottom: 10px;
     letter-spacing: 2px; font-weight: 600; line-height: 1.2;
@@ -820,7 +991,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 6px; }}
   .big-icon {{ font-size: 30px; line-height: 1.08; }}
   .big-temp {{ font-size: 22px; font-weight: 700; color: #1f2937; line-height: 1.1; }}
-  .card-sub {{ font-size: 11px; color: #7b8594; margin-top: 8px; line-height: 1.5; }}
+  .card-sub {{ font-size: 11px; color: {accent_color}; opacity: .75; margin-top: 8px; line-height: 1.5; }}
   .card-sub span {{ margin: 0 3px; }}
 
   /* ── 信息区域 ── */
@@ -833,36 +1004,37 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     padding: 7px 24px; font-size: 12px; color: #7b8594; line-height: 1.9;
   }}
   .info-label {{
-    font-size: 11px; color: #8f98a6; margin-bottom: 9px;
-    letter-spacing: 1px; line-height: 1.2;
+    font-size: 11px; color: {accent_color}; margin-bottom: 9px;
+    letter-spacing: 1px; line-height: 1.2; font-weight: 700;
   }}
   .info-content {{ font-size: 13px; color: #4b5563; line-height: 1.65; }}
-  .aqi-main {{ font-weight: 700; }}
-  .empty-temp {{ font-size: 13px; color: #9aa3af; line-height: 1.2; }}
+  .aqi-main {{ font-weight: 700; color: {accent_color}; }}
+  .empty-temp {{ font-size: 13px; color: {accent_color}; opacity: .75; line-height: 1.2; }}
 
   /* ── 生活指数 ── */
   .life-grid {{
     display: flex; flex-wrap: wrap; gap: 10px;
   }}
   .life-tag {{
-    display: inline-block; font-size: 12px; color: #556070;
-    background: #F5F7FA; padding: 6px 14px; border-radius: 20px;
+    display: inline-block; font-size: 12px; color: {accent_color};
+    background: {accent_bg}; padding: 6px 14px; border-radius: 20px;
     line-height: 1.25;
   }}
 
   /* ── 着装建议 ── */
   .clothing {{
-    background: #F5F7FA;
+    background: {accent_bg};
     border-radius: 10px;
     padding: 12px 14px; margin-top: 10px;
+    border: 1px solid {accent_color}22;
   }}
-  .clothing-brief {{ font-size: 13px; color: #2f3640; line-height: 1.55; font-weight: 600; }}
-  .clothing-detail {{ font-size: 12px; color: #7b8594; margin-top: 4px; line-height: 1.6; }}
+  .clothing-brief {{ font-size: 13px; color: {accent_color}; line-height: 1.55; font-weight: 700; }}
+  .clothing-detail {{ font-size: 12px; color: #5f6673; margin-top: 4px; line-height: 1.6; }}
 
   /* ── 底部 ── */
   .footer {{
     text-align: center; padding: 18px 24px 20px;
-    font-size: 11px; color: #aab2bf; line-height: 1.6;
+    font-size: 11px; color: {accent_color}; opacity: .7; line-height: 1.6;
   }}
 </style>
 </head>
