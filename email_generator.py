@@ -19,68 +19,106 @@ BEIJING_TZ = timezone(timedelta(hours=8))
 #           雪天→冰白淡蓝系 | 雾→暖灰系 | 风→青灰系
 #           雷暴→深紫灰系 | 高温→橙红系
 # ─────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  配色主题 — 舒适·清晰·柔和
+#  原则：优先可读性，饱和度适中，避免深重色压字
+#  应用：primary=文字/图标/边框，bg=卡片背景，gradient=渐变/辅助
+# ═══════════════════════════════════════════════════════════════
 COLOR_THEME = {
-    # ── 晴天 ── 天蓝渐变，清澈通透
+    # 晴 — 轻盈透亮的天蓝，像春日晴空
     "sunny": {
-        "primary":   "#1E88E5",   # 晴蓝主色
-        "bg":        "#E8F4FD",   # 天空浅底
-        "gradient":  "#64B5F6",   # 渐变延伸
+        "primary":   "#5CB8E6",
+        "bg":        "#F2F9FE",
+        "gradient":  "#8ED0F2",
     },
-    # ── 多云 · 浅 ── 柔和中性灰
+    # 多云（浅阴）— 薄纱灰，透气不沉闷
     "cloudy_light": {
-        "primary":   "#78909C",   # 柔灰蓝
-        "bg":        "#ECEFF1",   # 淡灰底
-        "gradient":  "#B0BEC5",   # 灰调延伸
+        "primary":   "#8CA8B6",
+        "bg":        "#F6F8F9",
+        "gradient":  "#B4C8D0",
     },
-    # ── 多云 · 深 ── 沉稳石墨灰
+    # 阴（深阴）— 浅灰透气，避免忧郁感
     "cloudy_deep": {
-        "primary":   "#546E7A",   # 石墨灰
-        "bg":        "#CFD8DC",   # 冷灰底
-        "gradient":  "#78909C",   # 深灰延伸
+        "primary":   "#97AAB4",
+        "bg":        "#F0F3F5",
+        "gradient":  "#BDCCD3",
     },
-    # ── 雨天 · 轻 ── 薄雾冷蓝
+    # 晴间多云（薄云遮日）— 天蓝偏柔
+    "haze": {
+        "primary":   "#70ACCA",
+        "bg":        "#F3F9FD",
+        "gradient":  "#9CC8DD",
+    },
+    # 小雨 — 柔蓝如水
     "rainy_light": {
-        "primary":   "#4A7FA5",   # 冷雾蓝
-        "bg":        "#E3EBF2",   # 淡蓝灰底
-        "gradient":  "#6FA3C0",   # 蓝调延伸
+        "primary":   "#68A3BE",
+        "bg":        "#F0F6FA",
+        "gradient":  "#94C0D4",
     },
-    # ── 雨天 · 重 ── 深邃墨蓝
+    # 中雨/大雨/暴雨
     "rainy_deep": {
-        "primary":   "#2C4F66",   # 墨蓝主色
-        "bg":        "#C8D9E6",   # 冷调底
-        "gradient":  "#3D6A8A",   # 深蓝延伸
+        "primary":   "#4E88A2",
+        "bg":        "#E6EFF5",
+        "gradient":  "#78AEBF",
     },
-    # ── 雪天 ── 冰晶白蓝，清冷纯净
+    # 小雪 — 冰晶淡蓝
     "snow": {
-        "primary":   "#5B8DB8",   # 冰蓝主色
-        "bg":        "#EEF4FA",   # 冰晶浅底
-        "gradient":  "#90B8D4",   # 霜白延伸
+        "primary":   "#6EA4C0",
+        "bg":        "#F2F8FC",
+        "gradient":  "#9DC2D6",
     },
-    # ── 雾/霾 ── 暖调中性，略带暖灰紫
+    # 大雪
+    "snow_deep": {
+        "primary":   "#568EA8",
+        "bg":        "#EAF2F7",
+        "gradient":  "#86B6CA",
+    },
+    # 轻雾/薄雾 — 薄纱白灰
     "fog": {
-        "primary":   "#7D8A97",   # 暖灰
-        "bg":        "#F0F2F4",   # 雾白底
-        "gradient":  "#A8B4C0",   # 灰调延伸
+        "primary":   "#96A6B0",
+        "bg":        "#F7F9FA",
+        "gradient":  "#BBC6CC",
     },
-    # ── 风/扬沙 ── 青灰色系
+    # 浓雾 — 依然透气
+    "fog_deep": {
+        "primary":   "#86969E",
+        "bg":        "#F2F4F5",
+        "gradient":  "#AEB8BE",
+    },
+    # 和风 — 清透青灰
     "wind": {
-        "primary":   "#5C8A8A",   # 青灰主色
-        "bg":        "#E6F0F0",   # 清冷底
-        "gradient":  "#7FA8A8",   # 风调延伸
+        "primary":   "#6EA4A4",
+        "bg":        "#F3FAFA",
+        "gradient":  "#9ECCCC",
     },
-    # ── 雷暴 ── 深紫灰，压抑有力量感
+    # 强风/大风
+    "wind_deep": {
+        "primary":   "#589090",
+        "bg":        "#EBF5F5",
+        "gradient":  "#88B6B6",
+    },
+    # 轻雷 — 淡紫灰
     "thunder": {
-        "primary":   "#5C4F7C",   # 深紫灰
-        "bg":        "#E8E6F2",   # 暗紫底
-        "gradient":  "#7A6FA0",   # 紫调延伸
+        "primary":   "#7E84A2",
+        "bg":        "#F4F5F9",
+        "gradient":  "#A4AAC0",
     },
-    # ── 高温极端 ── 橙红警示
+    # 强雷暴
+    "thunder_deep": {
+        "primary":   "#6E748E",
+        "bg":        "#EDEFF5",
+        "gradient":  "#9498B0",
+    },
+    # 高温预警
     "extreme": {
-        "primary":   "#D94F2B",   # 炽烈橙红
-        "bg":        "#FFF0EC",   # 热浪浅底
-        "gradient":  "#F07B52",   # 橙调延伸
+        "primary":   "#C06830",
+        "bg":        "#FDF2EC",
+        "gradient":  "#D88850",
     },
 }
+
+
+
 
 
 def _beijing_now() -> datetime:
@@ -114,6 +152,9 @@ def _theme_key_from_text(text: str) -> str:
     if not text:
         return "sunny"
     s = str(text).upper()
+    # ── 晴间 / 晴转（薄云遮日，次晴但偏阴）──
+    if any(k in s for k in ("晴间", "晴转", "多云转晴")):
+        return "haze"
     # ── 晴 / 晴天（最高优先）──
     if any(k in s for k in ("晴", "CLEAR", "SUNNY")):
         return "sunny"
@@ -185,6 +226,8 @@ def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float, target_cast
     variant = _theme_variant_from_text(family_source, family)
 
     # 2. 按主题族直接返回
+    if family == "haze":
+        return COLOR_THEME["haze"]
     if family == "snow":
         return COLOR_THEME["snow_deep"] if variant == "deep" else COLOR_THEME["snow"]
     if family == "thunder":
