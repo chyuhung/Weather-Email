@@ -728,6 +728,8 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     # ======================== HTML 正文 ========================
 
     # ---- Hero 卡片数据（必须先算，用于确定主题锚点）----
+    # Initialize target_skycon early to avoid UnboundLocalError
+    target_skycon = ""
     hero_morning = slots.get("morning")
     if hero_morning:
         hero_icon = _sky_icon(hero_morning.get("skycon", hero_morning.get("weather", "")))
@@ -949,9 +951,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{mode_title} - {city}</title>
 <style>
+  /* Google Fonts - Inter: premium numerals, clean hierarchy */
+  @import url(https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap);
+
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background: linear-gradient(180deg, {accent_bg} 0%, #FFFFFF 100%);
     color: #1f2937;
     min-height: 100vh; padding: 20px;
@@ -965,28 +970,28 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     box-shadow: 0 8px 32px rgba(99, 130, 175, 0.13);
   }}
 
-  /* ── 顶栏 ── */
+  /* 顶栏 */
   .topbar {{
     background: linear-gradient(135deg, {accent_color} 0%, {accent_gradient} 100%);
     color: #fff; padding: 18px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }}
   .topbar-title {{ font-size: 16px; font-weight: 700; letter-spacing: 1px; line-height: 1.15; }}
-  .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.35; }}
+  .topbar-right {{ font-size: 14px; opacity: .95; text-align: right; line-height: 1.4; }}
   .topbar-date {{ display: block; letter-spacing: .5px; }}
-  .topbar-city {{ display: block; opacity: .82; font-size: 11px; margin-top: 3px; line-height: 1.15; }}
+  .topbar-city {{ display: block; opacity: .82; font-size: 14px; margin-top: 3px; line-height: 1.15; }}
 
-  /* ── Hero 概览卡片 ── */
+  /* Hero 概览卡片 */
   .hero {{
     padding: 30px 24px 24px; margin: 0;
   }}
   .hero-top {{ display: flex; align-items: center; gap: 22px; margin-bottom: 16px; }}
   .hero-icon {{ font-size: 58px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
   .hero-info {{ flex: 1; }}
-  .hero-temp {{ font-size: 40px; font-weight: 700; color: {accent_color}; line-height: 1.08; letter-spacing: -.5px; }}
-  .hero-temp .night {{ color: {accent_color}cc; font-weight: 500; font-size: 28px; }}
+  .hero-temp {{ font-size: 68px; font-weight: 700; color: {accent_color}; line-height: 1.0; letter-spacing: -2px; }}
+  .hero-temp .night {{ color: {accent_color}cc; font-weight: 400; font-size: 36px; }}
   .hero-temp .sep {{ color: {accent_color}88; font-weight: 300; margin: 0 4px; }}
-  .hero-weather {{ font-size: 16px; color: {accent_color}; margin-top: 6px; letter-spacing: .5px; line-height: 1.35; font-weight: 600; }}
+  .hero-weather {{ font-size: 17px; color: {accent_color}; margin-top: 6px; letter-spacing: .5px; line-height: 1.4; font-weight: 500; }}
   .hero-tags {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }}
   .hero-tag {{
     display: inline-block; font-size: 12px; color: {accent_color};
@@ -994,87 +999,78 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     line-height: 1.25;
   }}
 
-  /* ── 小节标题 ── */
+  /* 小节标题 */
   .section-label {{
     padding: 20px 24px 10px;
-    font-size: 12px; color: {accent_color}; letter-spacing: 1px; font-weight: 600;
+    font-size: 11px; color: {accent_color}; letter-spacing: 1.5px; font-weight: 600;
+    line-height: 1.2;
   }}
 
-  /* ── 天气关键点（内嵌 Hero 底部） ── */
+  /* 关键点（嵌入 Hero 底部） */
   .hero-keypoint {{
     margin-top: 16px; padding: 12px 14px;
     background: #F5F7FA; border-radius: 10px;
   }}
-  .hero-keypoint-text {{ font-size: 13px; color: #5f6673; line-height: 1.68; }}
+  .hero-keypoint-text {{ font-size: 13px; color: #5f6673; line-height: 1.65; }}
 
-  /* ── 分段天气卡片 ── */
+  /* 分段天气卡片 */
   .card-container {{ padding: 0 24px 10px; }}
   .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }}
   .card {{
-    background: #F5F7FA; border-radius: 16px;
-    padding: 18px 12px; text-align: center;
-    border: 1px solid {accent_color}22;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, {accent_bg} 90%, {accent_gradient} 100%);
+    background-clip: padding-box;
+    border-radius: 16px; padding: 18px 12px; text-align: center;
+    border: 1px solid {accent_color}18;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(99, 130, 175, 0.07);
     transition: all .15s ease;
   }}
-  /* 时段卡片统一使用主题背景色 */
-  .card {{ background: {accent_bg}; }}
-
-  .card.highlight {{
-    border-color: {accent_color}33;
-  }}
+  .card.highlight {{ border-color: {accent_color}33; box-shadow: 0 10px 24px rgba(99, 130, 175, 0.11); }}
   .card-label {{
-    font-size: 11px; color: #8f98a6; margin-bottom: 10px;
-    letter-spacing: 2px; font-weight: 600; line-height: 1.2;
+    font-size: 11px; color: {accent_color}; margin-bottom: 10px;
+    letter-spacing: 2px; font-weight: 700; line-height: 1.2;
+    text-transform: uppercase;
   }}
   .slot-precip {{
-    background: #fff; color: {accent_color}; border-radius: 12px;
+    background: rgba(255,255,255,0.94); color: {accent_color}; border-radius: 12px;
     font-size: 11px; padding: 3px 10px; margin-bottom: 7px;
-    display: inline-block; font-weight: 600; line-height: 1.2;
+    display: inline-block; font-weight: 700; line-height: 1.2;
+    border: 1px solid {accent_color}14;
   }}
   .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 6px; }}
-  .big-icon {{ font-size: 30px; line-height: 1.08; }}
-  .big-temp {{ font-size: 22px; font-weight: 700; color: #1f2937; line-height: 1.1; }}
-  .card-sub {{ font-size: 11px; color: {accent_color}; opacity: .75; margin-top: 8px; line-height: 1.5; }}
-  .card-sub span {{ margin: 0 3px; }}
+  .big-icon {{ font-size: 30px; line-height: 1.08; filter: drop-shadow(0 2px 4px rgba(99, 130, 175, 0.10)); }}
+  .big-temp {{ font-size: 26px; font-weight: 800; color: #243041; line-height: 1.0; letter-spacing: -0.5px; text-shadow: 0 1px 0 rgba(255,255,255,0.55); }}
+  .card-sub {{ font-size: 11px; color: #667085; margin-top: 8px; line-height: 1.5; }}
+  .card-sub span {{ margin: 0 3px; color: #4b5563; }}
 
-  /* ── 信息区域 ── */
+  /* 信息区域 */
   .info-section {{
     padding: 12px 24px;
   }}
   .aqi-block {{ margin-top: 6px; }}
   .live-extras-block {{ margin-top: 2px; }}
-  .info-row {{
-    padding: 7px 24px; font-size: 12px; color: #7b8594; line-height: 1.9;
-  }}
-  .info-label {{
-    font-size: 11px; color: {accent_color}; margin-bottom: 9px;
-    letter-spacing: 1px; line-height: 1.2; font-weight: 700;
-  }}
+  .info-row {{ padding: 7px 24px; font-size: 12px; color: #7b8594; line-height: 1.9; }}
+  .info-label {{ font-size: 11px; color: {accent_color}; margin-bottom: 9px; letter-spacing: 1px; line-height: 1.2; font-weight: 600; }}
   .info-content {{ font-size: 13px; color: #4b5563; line-height: 1.65; }}
   .aqi-main {{ font-weight: 700; color: {accent_color}; }}
   .empty-temp {{ font-size: 13px; color: {accent_color}; opacity: .75; line-height: 1.2; }}
 
-  /* ── 生活指数 ── */
-  .life-grid {{
-    display: flex; flex-wrap: wrap; gap: 10px;
-  }}
+  /* 生活指数 */
+  .life-grid {{ display: flex; flex-wrap: wrap; gap: 10px; }}
   .life-tag {{
     display: inline-block; font-size: 12px; color: {accent_color};
-    background: {accent_bg}; padding: 6px 14px; border-radius: 20px;
-    line-height: 1.25;
+    background: {accent_bg}; padding: 6px 14px; border-radius: 20px; line-height: 1.25;
   }}
 
-  /* ── 着装建议 ── */
+  /* 着装建议 */
   .clothing {{
-    background: {accent_bg};
-    border-radius: 10px;
-    padding: 12px 14px; margin-top: 10px;
-    border: 1px solid {accent_color}22;
+    background: {accent_bg}; border-radius: 10px;
+    padding: 12px 14px; margin-top: 10px; border: 1px solid {accent_color}22;
   }}
   .clothing-brief {{ font-size: 13px; color: {accent_color}; line-height: 1.55; font-weight: 700; }}
   .clothing-detail {{ font-size: 12px; color: #5f6673; margin-top: 4px; line-height: 1.6; }}
 
-  /* ── 底部 ── */
+  /* 底部 */
   .footer {{
     text-align: center; padding: 18px 24px 20px;
     font-size: 11px; color: {accent_color}; opacity: .7; line-height: 1.6;
