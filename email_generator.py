@@ -755,51 +755,51 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* ── 顶栏 ── */
   .topbar {{
     background: {accent_color};
-    color: #fff; padding: 16px 24px;
+    color: #fff; padding: 18px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }}
-  .topbar-title {{ font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1.2; }}
-  .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.4; }}
+  .topbar-title {{ font-size: 16px; font-weight: 600; letter-spacing: 1px; line-height: 1.15; }}
+  .topbar-right {{ font-size: 12px; opacity: .95; text-align: right; line-height: 1.35; }}
   .topbar-date {{ display: block; letter-spacing: .5px; }}
-  .topbar-city {{ display: block; opacity: .78; font-size: 11px; margin-top: 2px; line-height: 1.2; }}
+  .topbar-city {{ display: block; opacity: .78; font-size: 11px; margin-top: 3px; line-height: 1.15; }}
 
   /* ── Hero 概览卡片 ── */
   .hero {{
-    padding: 28px 24px 22px; margin: 0;
+    padding: 30px 24px 24px; margin: 0;
   }}
-  .hero-top {{ display: flex; align-items: center; gap: 20px; margin-bottom: 14px; }}
+  .hero-top {{ display: flex; align-items: center; gap: 22px; margin-bottom: 16px; }}
   .hero-icon {{ font-size: 58px; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,.08)); }}
   .hero-info {{ flex: 1; }}
   .hero-temp {{ font-size: 40px; font-weight: 700; color: #1f2937; line-height: 1.08; letter-spacing: -.5px; }}
   .hero-temp .night {{ color: #6b7280; font-weight: 500; font-size: 28px; }}
   .hero-temp .sep {{ color: #c0c6d0; font-weight: 300; margin: 0 4px; }}
-  .hero-weather {{ font-size: 16px; color: #4b5563; margin-top: 4px; letter-spacing: .5px; line-height: 1.35; }}
-  .hero-tags {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }}
+  .hero-weather {{ font-size: 16px; color: #4b5563; margin-top: 6px; letter-spacing: .5px; line-height: 1.35; }}
+  .hero-tags {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }}
   .hero-tag {{
     display: inline-block; font-size: 12px; color: #556070;
-    background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
-    line-height: 1.3;
+    background: #F5F7FA; padding: 6px 14px; border-radius: 20px;
+    line-height: 1.25;
   }}
 
   /* ── 小节标题 ── */
   .section-label {{
-    padding: 18px 24px 8px;
+    padding: 20px 24px 10px;
     font-size: 12px; color: #8f98a6; letter-spacing: 1px;
   }}
 
   /* ── 天气关键点（内嵌 Hero 底部） ── */
   .hero-keypoint {{
-    margin-top: 14px; padding: 10px 14px;
+    margin-top: 16px; padding: 12px 14px;
     background: #F5F7FA; border-radius: 10px;
   }}
-  .hero-keypoint-text {{ font-size: 13px; color: #5f6673; line-height: 1.65; }}
+  .hero-keypoint-text {{ font-size: 13px; color: #5f6673; line-height: 1.68; }}
 
   /* ── 分段天气卡片 ── */
-  .card-container {{ padding: 0 24px 8px; }}
-  .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }}
+  .card-container {{ padding: 0 24px 10px; }}
+  .card-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }}
   .card {{
     background: #F5F7FA; border-radius: 16px;
-    padding: 16px 12px; text-align: center;
+    padding: 18px 12px; text-align: center;
     border: 1px solid #EAEEF3;
     transition: all .15s ease;
   }}
@@ -809,55 +809,59 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .card.rainy {{ background: #F0F2F7; }}
   .card-label {{
-    font-size: 11px; color: #8f98a6; margin-bottom: 8px;
+    font-size: 11px; color: #8f98a6; margin-bottom: 10px;
     letter-spacing: 2px; font-weight: 600; line-height: 1.2;
   }}
   .slot-precip {{
     background: #fff; color: {accent_color}; border-radius: 12px;
-    font-size: 11px; padding: 3px 10px; margin-bottom: 6px;
+    font-size: 11px; padding: 3px 10px; margin-bottom: 7px;
     display: inline-block; font-weight: 600; line-height: 1.2;
   }}
-  .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 4px; }}
-  .big-icon {{ font-size: 30px; line-height: 1.1; }}
+  .card-main {{ display: flex; flex-direction: column; align-items: center; gap: 6px; }}
+  .big-icon {{ font-size: 30px; line-height: 1.08; }}
   .big-temp {{ font-size: 22px; font-weight: 700; color: #1f2937; line-height: 1.1; }}
-  .card-sub {{ font-size: 11px; color: #7b8594; margin-top: 6px; line-height: 1.45; }}
+  .card-sub {{ font-size: 11px; color: #7b8594; margin-top: 8px; line-height: 1.5; }}
   .card-sub span {{ margin: 0 3px; }}
 
   /* ── 信息区域 ── */
   .info-section {{
     padding: 12px 24px;
   }}
+  .aqi-block {{ margin-top: 6px; }}
+  .live-extras-block {{ margin-top: 2px; }}
   .info-row {{
-    padding: 6px 24px; font-size: 12px; color: #7b8594; line-height: 1.8;
+    padding: 7px 24px; font-size: 12px; color: #7b8594; line-height: 1.9;
   }}
   .info-label {{
-    font-size: 11px; color: #8f98a6; margin-bottom: 8px;
+    font-size: 11px; color: #8f98a6; margin-bottom: 9px;
     letter-spacing: 1px; line-height: 1.2;
   }}
-  .info-content {{ font-size: 13px; color: #4b5563; line-height: 1.6; }}
+  .info-content {{ font-size: 13px; color: #4b5563; line-height: 1.65; }}
+  .aqi-main {{ font-weight: 700; }}
+  .empty-temp {{ font-size: 13px; color: #9aa3af; line-height: 1.2; }}
 
   /* ── 生活指数 ── */
   .life-grid {{
-    display: flex; flex-wrap: wrap; gap: 8px;
+    display: flex; flex-wrap: wrap; gap: 10px;
   }}
   .life-tag {{
     display: inline-block; font-size: 12px; color: #556070;
-    background: #F5F7FA; padding: 5px 14px; border-radius: 20px;
-    line-height: 1.3;
+    background: #F5F7FA; padding: 6px 14px; border-radius: 20px;
+    line-height: 1.25;
   }}
 
   /* ── 着装建议 ── */
   .clothing {{
     background: #F5F7FA;
     border-radius: 10px;
-    padding: 10px 14px; margin-top: 8px;
+    padding: 12px 14px; margin-top: 10px;
   }}
-  .clothing-brief {{ font-size: 13px; color: #2f3640; line-height: 1.5; font-weight: 600; }}
-  .clothing-detail {{ font-size: 12px; color: #7b8594; margin-top: 3px; line-height: 1.55; }}
+  .clothing-brief {{ font-size: 13px; color: #2f3640; line-height: 1.55; font-weight: 600; }}
+  .clothing-detail {{ font-size: 12px; color: #7b8594; margin-top: 4px; line-height: 1.6; }}
 
   /* ── 底部 ── */
   .footer {{
-    text-align: center; padding: 16px 24px 18px;
+    text-align: center; padding: 18px 24px 20px;
     font-size: 11px; color: #aab2bf; line-height: 1.6;
   }}
 </style>
