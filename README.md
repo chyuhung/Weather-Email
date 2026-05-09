@@ -7,16 +7,19 @@
 ## 功能特性
 
 | 功能 | 说明 |
-|-----|-----|
+|-----|------|
 | **双模式推送** | 早间推送今日天气；傍晚推送明日天气 |
+| **双数据源** | 彩云天气（推荐，数据丰富）与高德天气（支持城市名/adcode） |
 | **分时段预报** | 上午/下午/晚间三时段，每时段显示温度区间和降水概率 |
 | **生活指数** | 紫外线、穿衣、舒适度、感冒风险、洗车建议 |
 | **智能穿衣建议** | 根据温度区间 + 温差自动生成穿着推荐 |
 | **带伞提醒** | 自动判断雨雪天气，三时段独立标识 |
-| **空气质量** | 早间显示实况 AQI/PM2.5，晚间显示预计空气质量 |
+| **空气质量** | 早间显示实况 AQI/PM2.5/PM10/O₃，晚间显示预计空气质量 |
 | **极端天气预警** | 高温防暑、防晒、大风、冰雪等标签提示 |
 | **日出日落** | 显示目标日期的日出日落时间 |
+| **自适应配色** | 根据天气语义自动切换邮件主题色（晴/雨/雪/雾/风/雷/高温） |
 | **调试模式** | `--dry-run` 生成 HTML 文件本地预览 |
+| **多天气预览** | 内置 `preview_demo.py` 一键生成所有天气场景的邮件效果 |
 | **定时执行** | 支持 GitHub Actions 或腾讯云函数触发 |
 
 ---
@@ -25,17 +28,20 @@
 
 ```
 Weather-Email/
-├── main.py                 # 入口脚本（支持 --mode / --dry-run）
-├── weather_api.py          # 天气数据获取（彩云天气 + 高德天气）
-├── email_generator.py      # HTML 邮件生成（双模式模板）
-├── email_sender.py         # 邮件发送（SMTP，内置超时和重试）
-├── config.py               # 通用配置（无敏感信息，支持环境变量覆盖）
-├── .env.example            # 本地环境变量示例
-├── requirements.txt        # Python 依赖
-├── .github/
-│   └── workflows/
-│       └── daily-weather.yml   # GitHub Actions 定时任务
-└── tencent_cloud_function.py  # 腾讯云函数触发脚本（可选）
+├── main.py                     # 入口脚本（支持 --mode / --dry-run）
+├── weather_api.py              # 天气数据获取（彩云天气 + 高德天气）
+├── email_generator.py          # HTML 邮件生成（双模式模板 + 自适应配色）
+├── email_sender.py             # 邮件发送（SMTP，内置超时和重试）
+├── config.py                   # 通用配置（无敏感信息，支持环境变量覆盖）
+├── preview_demo.py             # 本地多天气预览生成器（14 种天气场景）
+├── tencent_cloud_function.py   # 腾讯云函数触发脚本（通过 GitHub API）
+├── .env.example                # 本地环境变量示例
+├── .gitignore
+├── LICENSE
+├── README.md
+└── .github/
+    └── workflows/
+        └── daily-weather.yml   # GitHub Actions 定时任务
 ```
 
 ---
@@ -52,7 +58,7 @@ Weather-Email/
 | `EMAIL_SENDER` | **必填** | 发件人邮箱 | — |
 | `EMAIL_AUTH_CODE` | **必填** | 邮箱授权码（非登录密码） | — |
 | `EMAIL_RECEIVERS` | **必填** | 收件人（支持多人，逗号分隔，每位单独发送） | — |
-| `WEATHER_SOURCE` | 可选 | 天气数据源 | `caiyun` |
+| `WEATHER_SOURCE` | 可选 | 天气数据源，`caiyun` 或 `gaode` | `caiyun` |
 | `SENDER_NAME` | 可选 | 发件人显示名称 | `Weather-Email` |
 | `SMTP_SERVER` | 可选 | SMTP 服务器 | `smtp.exmail.qq.com` |
 | `SMTP_PORT` | 可选 | SMTP 端口 | `587` |
@@ -63,10 +69,14 @@ Weather-Email/
 
 - **推荐版本：Python 3.12.x**
 - GitHub Actions 当前固定使用 **Python 3.12.10**
-- 本地开发建议同样使用 **Python 3.12 或更高版本**，以避免历史上出现过的语法兼容问题（例如 f-string 相关差异）
+- 本地开发建议同样使用 **Python 3.12 或更高版本**
 
-> 如果你本地只能使用较低版本 Python，请先跑一次 `python --version` 和 `python main.py --dry-run` 做兼容性验证。
 
+---
+
+## 快速开始
+
+### 1. 安装依赖
 
 ```bash
 pip install requests python-dotenv
@@ -126,6 +136,31 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
 
 ---
 
+## 本地预览
+
+### 调试模式
+
+```bash
+python main.py --dry-run
+```
+
+会在当前目录生成 `weather_{mode}_{location}.html` 文件，可用浏览器直接打开预览。
+
+### 多天气场景预览
+
+内置 `preview_demo.py` 可一键生成 14 种天气场景（晴、多云、阴、小雨、暴雨、小雪、大雪、雾、浓雾、微风、大风、雷阵雨、强雷暴、高温）的早晚双模式邮件 HTML：
+
+```bash
+python preview_demo.py          # 生成所有场景（morning + evening）
+python preview_demo.py --mode morning   # 仅生成早间模式
+python preview_demo.py --mode evening   # 仅生成傍晚模式
+python preview_demo.py --open          # 生成后自动打开索引页
+```
+
+生成的文件会以 `preview_{编号}_{模式}_{主题}.html` 命名，并附带一个 `preview_index.html` 索引页方便浏览。
+
+---
+
 ## 定时部署
 
 ### 方案一：GitHub Actions（推荐）
@@ -146,7 +181,7 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
    - 早间推送：每天北京时间 07:00（推送今日天气）
    - 傍晚推送：每天北京时间 22:00（推送明日天气）
 
-   > 注意：workflow 触发器本身按 UTC 计时，但脚本会在运行时按北京时间自动选择 morning / evening 模式；仓库里的 workflow 也已显式设置 `TZ=Asia/Shanghai` 作为基线。
+   > workflow 中的 cron 触发器默认注释，需手动取消注释启用。脚本在运行时按北京时间自动选择 morning / evening 模式。
 
 4. **手动触发**：在 Actions 页面点击 `Run workflow`，自动根据北京时间选择模式
 
@@ -178,6 +213,7 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
 - 空气质量：实况 AQI、PM2.5、PM10、O₃
 - 生活指数：紫外线、穿衣、舒适度、感冒风险、洗车
 - 着装建议：根据温度和温差生成
+- 实况次要信息：能见度、气压、云量、降水强度
 
 ### 晚间模式
 - Hero 卡片：明日温度区间 + 天气 + 湿度 + 日出日落
@@ -185,6 +221,17 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
 - 三时段卡片：明天上午/下午/晚间
 - 预计空气质量：明日 AQI 和 PM2.5
 - 生活指数 + 着装建议
+
+### 自适应配色
+邮件配色根据天气语义自动切换，每种天气都有专属主题色：
+- ☀️ 晴天 → 天蓝系
+- ⛅ 多云/阴 → 浅灰系
+- 🌧️ 雨天 → 冷灰蓝系
+- ❄️ 雪天 → 冰白淡蓝系
+- 🌫️ 雾/霾 → 暖灰系
+- 💨 大风 → 青灰系
+- ⛈️ 雷暴 → 深紫灰系
+- 🔥 高温 → 橙红系
 
 ---
 
@@ -230,5 +277,5 @@ python main.py --dry-run         # 调试模式（生成 HTML 本地预览）
 
 - 所有 API 密钥、Token、授权码、邮箱、**位置信息**均通过环境变量读取
 - `config.py` 不包含任何敏感数据，可直接提交到 Git
-- `.gitignore` 已配置忽略 `.env`
+- `.gitignore` 已配置忽略 `.env` 和生成的 HTML 文件
 - SMTP 连接使用 TLS 加密
