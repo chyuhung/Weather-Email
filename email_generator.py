@@ -901,7 +901,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     max-width: 600px; 
     margin: 0 auto; 
     background: #fff;
-    -webkit-border-radius: 16px
+    -webkit-border-radius: 16px;
     border-radius: 16px; 
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -992,7 +992,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     color: {accent_color};
     background: #fff; 
     padding: 6px 14px; 
-    -webkit-border-radius: 20px
+    -webkit-border-radius: 20px;
     border-radius: 20px;
     line-height: 1.4;
     font-weight: 500;
@@ -1004,7 +1004,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     margin-top: 20px; 
     padding: 16px;
     background: #fff;
-    -webkit-border-radius: 12px
+    -webkit-border-radius: 12px;
     border-radius: 12px;
     border-left: 4px solid {accent_color};
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -1037,7 +1037,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .card {{
     background: #fff;
-    -webkit-border-radius: 14px
+    -webkit-border-radius: 14px;
     border-radius: 14px;
     padding: 20px 14px;
     text-align: center;
@@ -1065,7 +1065,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .slot-precip {{
     background: {accent_color}11; 
     color: {accent_color}; 
-    -webkit-border-radius: 10px
+    -webkit-border-radius: 10px;
     border-radius: 10px;
     font-size: 12px; 
     padding: 4px 10px; 
@@ -1128,7 +1128,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     color: {accent_color};
     background: {accent_bg}; 
     padding: 8px 16px; 
-    -webkit-border-radius: 20px
+    -webkit-border-radius: 20px;
     border-radius: 20px; 
     line-height: 1.4;
     border: 1px solid {accent_color}22;
@@ -1137,7 +1137,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* 着装建议 - 优化视觉层次 */
   .clothing {{
     background: #fff;
-    -webkit-border-radius: 12px
+    -webkit-border-radius: 12px;
     border-radius: 12px;
     padding: 16px; 
     margin-top: 12px; 
@@ -1177,7 +1177,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     }}
     
     .wrap {{
-      -webkit-border-radius: 12px
+      -webkit-border-radius: 12px;
     border-radius: 12px;
     }}
     
