@@ -801,12 +801,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         """渲染单个时段卡片（优化版：更好的间距和可读性）"""
         if not item:
             return f"""
-        <div class="card" style="opacity:.4">
+        <td class="card" style="opacity:.4; text-align:center; vertical-align:middle;">
             <div class="card-label">{label}</div>
             <div class="card-main">
                 <span class="empty-temp">暂无数据</span>
             </div>
-        </div>"""
+        </td>"""
 
         sky = item.get("skycon", item.get("weather", ""))
         icon = _sky_icon(sky)
@@ -841,7 +841,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         highlight_class = " highlight" if is_highlight else ""
 
         return f"""
-        <div class="card{rainy_class}{highlight_class}">
+        <td class="card{rainy_class}{highlight_class}">
             <div class="card-label">{label}</div>
             {precip_html}
             <div class="card-main">
@@ -849,7 +849,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
                 <span class="big-temp">{temp_str}</span>
             </div>
             <div class="card-sub">{wd} {wp}级 {humid_html}</div>
-        </div>"""
+        </td>"""
 
     # ======================== 组装优化的 HTML ========================
     html = f"""<!DOCTYPE html>
@@ -863,7 +863,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 </xml>
 <![endif]-->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>{mode_title} - {city}</title>
 <style>
   /* 
@@ -901,6 +901,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     max-width: 600px; 
     margin: 0 auto; 
     background: #fff;
+    -webkit-border-radius: 16px
     border-radius: 16px; 
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -909,6 +910,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* 顶栏 - 优化渐变支持 */
   .topbar {{
     background: {accent_color};
+    background: -webkit-linear-gradient(135deg, {accent_color} 0%, {accent_gradient} 100%);
     background: linear-gradient(135deg, {accent_color} 0%, {accent_gradient} 100%);
     color: #fff; 
     padding: 20px 24px;
@@ -986,10 +988,11 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   }}
   .hero-tag {{
     display: inline-block; 
-    font-size: 13px; 
+    font-size: 14px; 
     color: {accent_color};
     background: #fff; 
     padding: 6px 14px; 
+    -webkit-border-radius: 20px
     border-radius: 20px;
     line-height: 1.4;
     font-weight: 500;
@@ -1001,6 +1004,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     margin-top: 20px; 
     padding: 16px;
     background: #fff;
+    -webkit-border-radius: 12px
     border-radius: 12px;
     border-left: 4px solid {accent_color};
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -1015,7 +1019,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* 小节标题 */
   .section-label {{
     padding: 24px 24px 12px;
-    font-size: 13px; 
+    font-size: 14px; 
     color: {accent_color}; 
     letter-spacing: 1px; 
     font-weight: 700;
@@ -1026,18 +1030,24 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* 分段天气卡片 - 优化网格和间距 */
   .card-container {{ padding: 0 24px 16px; }}
   .card-grid {{ 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 16px; 
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 16px 0;
   }}
   .card {{
     background: #fff;
-    border-radius: 14px; 
-    padding: 20px 14px; 
+    -webkit-border-radius: 14px
+    border-radius: 14px;
+    padding: 20px 14px;
     text-align: center;
     border: 1px solid {accent_color}22;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     transition: all .2s ease;
+    display: table-cell;
+    vertical-align: top;
+    width: 33.33%;
+    min-height: 60px;  /* 触摸目标 ≥44px */
   }}
   .card.highlight {{ 
     border-color: {accent_color}44; 
@@ -1045,7 +1055,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     background: {accent_bg};
   }}
   .card-label {{
-    font-size: 12px; 
+    font-size: 14px; 
     color: {accent_color}; 
     margin-bottom: 12px;
     letter-spacing: 1.5px; 
@@ -1055,6 +1065,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .slot-precip {{
     background: {accent_color}11; 
     color: {accent_color}; 
+    -webkit-border-radius: 10px
     border-radius: 10px;
     font-size: 12px; 
     padding: 4px 10px; 
@@ -1079,7 +1090,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     line-height: 1.1; 
   }}
   .card-sub {{ 
-    font-size: 12px; 
+    font-size: 13px; 
     color: #6B7280; 
     margin-top: 10px; 
     line-height: 1.5; 
@@ -1096,7 +1107,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     line-height: 1.6; 
   }}
   .info-label {{ 
-    font-size: 13px; 
+    font-size: 14px; 
     color: {accent_color}; 
     margin-bottom: 8px; 
     letter-spacing: 0.5px; 
@@ -1113,10 +1124,11 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .life-grid {{ display: flex; flex-wrap: wrap; gap: 12px; }}
   .life-tag {{
     display: inline-block; 
-    font-size: 13px; 
+    font-size: 14px; 
     color: {accent_color};
     background: {accent_bg}; 
     padding: 8px 16px; 
+    -webkit-border-radius: 20px
     border-radius: 20px; 
     line-height: 1.4;
     border: 1px solid {accent_color}22;
@@ -1125,6 +1137,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* 着装建议 - 优化视觉层次 */
   .clothing {{
     background: #fff;
+    -webkit-border-radius: 12px
     border-radius: 12px;
     padding: 16px; 
     margin-top: 12px; 
@@ -1148,7 +1161,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .footer {{
     text-align: center; 
     padding: 20px 24px;
-    font-size: 12px; 
+    font-size: 14px; 
     color: #9CA3AF; 
     line-height: 1.6; 
     border-top: 1px solid #E5E7EB;
@@ -1157,13 +1170,15 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   /* ============================================
    * 响应式设计 - 移动端优化
    * ============================================ */
+  /* 大屏手机 / 小平板（如 iPhone 14 Pro Max） */
   @media screen and (max-width: 480px) {{
     body {{
       padding: 10px;
     }}
     
     .wrap {{
-      border-radius: 12px;
+      -webkit-border-radius: 12px
+    border-radius: 12px;
     }}
     
     .topbar {{
@@ -1282,6 +1297,22 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     }}
   }}
   
+  /* 目标设备基准：iPhone 14/15/16 */
+  @media screen and (max-width: 414px) {{
+    .hero-temp {{
+      font-size: 48px;
+    }}
+    .hero-icon {{
+      font-size: 56px;
+    }}
+    .card {{
+      padding: 18px 14px;
+    }}
+    .card-label {{
+      font-size: 13px;
+    }}
+  }}
+
   /* 小屏幕手机进一步优化 */
   @media screen and (max-width: 375px) {{
     .hero-temp {{
@@ -1365,17 +1396,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   <!-- 分时段预报 -->
   <div class="section-label" role="heading" aria-level="2">⏰ 分时段预报</div>
   <div class="card-container">
-    <div class="card-grid" role="list">
-      <div role="listitem">
+    <table class="card-grid" width="100%" cellpadding="0" cellspacing="16" border="0" role="list">
+      <tr role="listitem">
         {_slot_html(slots.get("morning"), '\u4E0A\u5348', is_highlight=(mode == "morning"))}
-      </div>
-      <div role="listitem">
         {_slot_html(slots.get("afternoon"), '\u4E0B\u5348')}
-      </div>
-      <div role="listitem">
         {_slot_html(slots.get("night"), '\u665A\u95F4')}
-      </div>
-    </div>
+      </tr>
+    </table>
   </div>
 
   <!-- 空气质量 -->
