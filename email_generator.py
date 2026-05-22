@@ -1225,31 +1225,36 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       font-size: 12px;
     }}
     
-    /* 卡片堆叠为单列 */
+    /* 卡片堆叠为单列 - table 布局移动端适配 */
     .card-container {{
       padding: 0 20px 12px;
     }}
     .card-grid {{
-      grid-template-columns: 1fr;
-      gap: 12px;
+      display: block;
+      width: 100%;
+    }}
+    .card-grid tr {{
+      display: block;
+      margin-bottom: 12px;
     }}
     .card {{
+      display: block;
+      width: 100%;
       padding: 16px 14px;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 16px;
       text-align: left;
+      margin-bottom: 12px;
     }}
     .card-label {{
       margin-bottom: 0;
       min-width: 60px;
-      font-size: 11px;
+      font-size: 13px;
+      display: inline-block;
     }}
     .card-main {{
+      display: inline-flex;
       flex-direction: row;
-      flex: 1;
-      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
     }}
     .big-icon {{
       font-size: 28px;
@@ -1258,17 +1263,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       font-size: 20px;
     }}
     .card-sub {{
-      margin-top: 0;
-      font-size: 11px;
+      margin-top: 4px;
+      font-size: 12px;
     }}
     .slot-precip {{
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      margin-bottom: 0;
-    }}
-    .card {{
-      position: relative;
+      display: inline-block;
+      margin-left: 8px;
     }}
     
     .info-section {{
