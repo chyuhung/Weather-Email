@@ -16,7 +16,7 @@ from email_generator import generate_html
 # 本地开发环境加载 .env 文件（生产环境不需要）
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(encoding="utf-8-sig")
 except ImportError:
     pass
 

@@ -1078,16 +1078,21 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     flex-direction: column; 
     align-items: center; 
     gap: 8px; 
+    min-width: 0;
+    overflow: hidden;
   }}
   .big-icon {{ 
     font-size: 32px; 
     line-height: 1.1; 
+    flex: 0 0 auto;
   }}
   .big-temp {{ 
     font-size: 24px; 
     font-weight: 700; 
     color: {text_color}; 
     line-height: 1.1; 
+    white-space: nowrap;
+    flex: 0 0 auto;
   }}
   .card-sub {{ 
     font-size: 13px; 
@@ -1225,50 +1230,79 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       font-size: 12px;
     }}
     
-    /* 卡片堆叠为单列 - table 布局移动端适配 */
+    /* 卡片单列纵向排布 - 移动端适配 */
     .card-container {{
-      padding: 0 20px 12px;
+      padding: 0 16px 16px;
+      overflow: hidden;
     }}
     .card-grid {{
-      display: block;
-      width: 100%;
+      display: block !important;
+      width: 100% !important;
+      border-spacing: 0 !important;
+      table-layout: auto !important;
     }}
+    .card-grid tbody,
     .card-grid tr {{
-      display: block;
-      margin-bottom: 12px;
+      display: block !important;
+      width: 100% !important;
+    }}
+    .card-grid td {{
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      border-spacing: 0;
     }}
     .card {{
-      display: block;
-      width: 100%;
-      padding: 16px 14px;
-      text-align: left;
-      margin-bottom: 12px;
-    }}
-    .card-label {{
-      margin-bottom: 0;
-      min-width: 60px;
-      font-size: 13px;
-      display: inline-block;
-    }}
-    .card-main {{
-      display: inline-flex;
+      display: flex !important;
       flex-direction: row;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 16px;
+      margin: 0 0 12px 0;
+      border-radius: 14px;
+      box-sizing: border-box;
+    }}
+    .card:last-child {{
+      margin-bottom: 0;
+    }}
+    .card-label {{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 48px;
+      font-size: 13px;
+      margin-bottom: 0;
+    }}
+    .card-main {{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
     }}
     .big-icon {{
-      font-size: 28px;
+      font-size: 32px;
+      flex-shrink: 0;
     }}
     .big-temp {{
-      font-size: 20px;
+      font-size: 22px;
+    font-weight: 700;
+    white-space: nowrap;
+      flex-shrink: 0;
     }}
     .card-sub {{
-      margin-top: 4px;
+      margin-top: 0;
       font-size: 12px;
+      line-height: 1.4;
     }}
     .slot-precip {{
       display: inline-block;
-      margin-left: 8px;
+      margin-left: 0;
+      margin-bottom: 0;
     }}
     
     .info-section {{
@@ -1396,7 +1430,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   <!-- 分时段预报 -->
   <div class="section-label" role="heading" aria-level="2">⏰ 分时段预报</div>
   <div class="card-container">
-    <table class="card-grid" width="100%" cellpadding="0" cellspacing="16" border="0" role="list">
+    <table class="card-grid" width="100%" cellpadding="0" cellspacing="0" border="0" role="list">
       <tr role="listitem">
         {_slot_html(slots.get("morning"), '\u4E0A\u5348', is_highlight=(mode == "morning"))}
         {_slot_html(slots.get("afternoon"), '\u4E0B\u5348')}
