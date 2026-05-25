@@ -1176,7 +1176,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
    * 响应式设计 - 移动端优化
    * ============================================ */
   /* 大屏手机 / 小平板（如 iPhone 14 Pro Max） */
-  @media screen and (max-width: 480px) {{
+  @media screen and (max-width: 600px) {{
     body {{
       padding: 10px;
     }}
@@ -1328,38 +1328,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     .footer {{
       padding: 16px 20px;
       font-size: 11px;
-    }}
-  }}
-  
-  /* 目标设备基准：iPhone 14/15/16 */
-  @media screen and (max-width: 414px) {{
-    .hero-temp {{
-      font-size: 48px;
-    }}
-    .hero-icon {{
-      font-size: 56px;
-    }}
-    .card {{
-      padding: 18px 14px;
-    }}
-    .card-label {{
-      font-size: 13px;
-    }}
-  }}
-
-  /* 小屏幕手机进一步优化 */
-  @media screen and (max-width: 375px) {{
-    .hero-temp {{
-      font-size: 36px;
-    }}
-    .hero-temp .night {{
-      font-size: 20px;
-    }}
-    .card {{
-      padding: 14px 12px;
-    }}
-    .big-temp {{
-      font-size: 18px;
     }}
   }}
   
