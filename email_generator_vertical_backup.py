@@ -855,7 +855,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-
+<!--[if mso]>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>{mode_title} - {city}</title>
@@ -1021,31 +1027,27 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border-top: 1px solid {accent_color}11;
   }}
 
-  /* 分段天气卡片 - 纵向单列（所有屏幕尺寸） */
-  .card-container {{
-    padding: 0 24px 20px;
-    max-width: 480px;
-    margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+  /* 分段天气卡片 - 优化网格和间距 */
+  .card-container {{ padding: 0 24px 16px; }}
+  .card-grid {{ 
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 16px 0;
   }}
   .card {{
     background: #fff;
     -webkit-border-radius: 14px;
     border-radius: 14px;
-    padding: 16px;
-    text-align: left;
+    padding: 20px 14px;
+    text-align: center;
     border: 1px solid {accent_color}22;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     transition: all .2s ease;
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
+    display: block;
+    vertical-align: top;
+    width: 100%;
+    min-height: 60px;  /* 触摸目标 ≥44px */
   }}
   .card.highlight {{ 
     border-color: {accent_color}44; 
@@ -1233,23 +1235,19 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       padding: 0 16px 20px;
       overflow: hidden;
     }}
-  .card {{
-    background: #fff;
-    -webkit-border-radius: 14px;
-    border-radius: 14px;
-    padding: 16px;
-    text-align: left;
-    border: 1px solid {accent_color}22;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    transition: all .2s ease;
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-  }}
+    .card {{
+      display: flex !important;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 18px 16px;
+      margin: 0 0 14px 0;
+      border-radius: 14px;
+      box-sizing: border-box;
+      line-height: 1.6;
+    }}
     .card:last-child {{
       margin-bottom: 0;
     }}
@@ -1344,21 +1342,10 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 <style>
   /* Outlook 专用样式 */
   .card {{
-    background: #fff;
-    -webkit-border-radius: 14px;
-    border-radius: 14px;
-    padding: 16px;
-    text-align: left;
-    border: 1px solid {accent_color}22;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    transition: all .2s ease;
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
+    width: 32%;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 1%;
   }}
   .topbar {{
     background: {accent_color} !important;
