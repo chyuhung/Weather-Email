@@ -815,7 +815,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         t_max = item.get("temp_max")
         wd = item.get("wind_direction", "—")
         wp = item.get("wind_power", "—")
-        wind_speed = item.get("wind_speed")
         humid = item.get("humidity")
         precip_prob = item.get("precip_probability", 0)
         is_rain_slot = item.get("has_rain", False)
@@ -827,13 +826,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         else:
             temp_str = "?°"
 
-        wind_speed_html = ""
-        if wind_speed is not None and wind_speed not in ("N/A", "", None):
-            try:
-                wind_speed_html = f'<span class="card-meta">{float(wind_speed):.1f}m/s</span>'
-            except (ValueError, TypeError):
-                pass
-
         precip_html = ""
         if precip_prob and float(precip_prob) > 0:
             precip_html = f'<div class="slot-precip">🌧️ {int(float(precip_prob))}%</div>'
@@ -841,13 +833,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         humid_html = ""
         if humid is not None and humid not in ("N/A", "", None):
             try:
-                humid_html = f'<span class="card-meta">💧{int(float(humid))}%</span>'
+                humid_html = f'<span class="card-meta">湿度 {int(float(humid))}%</span>'
             except (ValueError, TypeError):
                 pass
 
         rainy_class = " rainy" if is_rain_slot else ""
         highlight_class = " highlight" if is_highlight else ""
-        wind_html = f'<span class="card-meta">风 {wd} {wp}级</span>'
+        wind_html = f'<span class="card-meta">{wd} {wp}级</span>'
 
         return f"""
         <div class="card{rainy_class}{highlight_class}">
@@ -858,10 +850,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
                     <span class="big-temp">{temp_str}</span>
                 </div>
                 <div class="card-right">
-                    {precip_html}
                     <div class="card-sub">
                         {wind_html}
-                        {wind_speed_html}
+                        {precip_html}
                         {humid_html}
                     </div>
                 </div>
@@ -1054,8 +1045,8 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border-radius: 14px;
     padding: 16px;
     text-align: left;
-    border: 1px solid {accent_color}22;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid {accent_color}1F;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     transition: all .2s ease;
     display: flex !important;
     flex-direction: column;
@@ -1071,13 +1062,14 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     background: {accent_bg};
   }}
   .card-label {{
-    font-size: 14px; 
+    font-size: 13px; 
     color: {accent_color}; 
     margin: 0;
-    letter-spacing: 1.2px; 
+    letter-spacing: 1px; 
     font-weight: 700; 
     text-transform: uppercase;
     text-align: center;
+    opacity: .95;
   }}
   .card-main {{ 
     display: flex; 
@@ -1105,11 +1097,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     flex: 1 1 auto;
     flex-wrap: wrap;
     margin-left: auto;
+    color: #6B7280;
   }}
   .big-icon {{ 
-    font-size: 32px; 
+    font-size: 30px; 
     line-height: 1.1; 
     flex: 0 0 auto;
+    opacity: .98;
   }}
   .big-temp {{ 
     font-size: 24px; 
@@ -1118,41 +1112,44 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     line-height: 1.1; 
     white-space: nowrap;
     flex: 0 0 auto;
+    letter-spacing: -0.3px;
   }}
   .card-sub {{ 
-    font-size: 13px; 
+    font-size: 12px; 
     color: #6B7280; 
     margin-top: 0; 
-    line-height: 1.5; 
+    line-height: 1.45; 
     min-width: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 10px;
+    gap: 4px 8px;
     align-items: center;
     justify-content: flex-end;
     text-align: right;
   }}
   .card-meta {{
     white-space: nowrap;
+    color: #4B5563;
   }}
   .slot-precip {{
-    background: {accent_color}11; 
+    background: {accent_color}10; 
     color: {accent_color}; 
     -webkit-border-radius: 10px;
     border-radius: 10px;
     font-size: 12px; 
-    padding: 4px 10px; 
+    padding: 3px 9px; 
     margin: 0;
     display: inline-flex; 
     align-items: center;
     font-weight: 600; 
     flex: 0 0 auto;
     white-space: nowrap;
-    align-self: flex-end;
+    align-self: center;
   }}
   /* 信息区域 */
   .info-section {{
     padding: 16px 24px;
+    border-top: 1px solid {accent_color}12;
   }}
   .info-row {{ 
     padding: 8px 24px; 
@@ -1161,31 +1158,31 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     line-height: 1.6; 
   }}
   .info-label {{ 
-    font-size: 14px; 
+    font-size: 13px; 
     color: {accent_color}; 
     margin-bottom: 8px; 
-    letter-spacing: 0.5px; 
+    letter-spacing: 0.4px; 
     font-weight: 700; 
   }}
   .info-content {{ 
-    font-size: 14px; 
+    font-size: 13px; 
     color: {text_color}; 
     line-height: 1.6; 
   }}
   .aqi-main {{ font-weight: 700; }}
 
   /* 生活指数 */
-  .life-grid {{ display: flex; flex-wrap: wrap; gap: 12px; }}
+  .life-grid {{ display: flex; flex-wrap: wrap; gap: 10px; }}
   .life-tag {{
     display: inline-block; 
-    font-size: 14px; 
+    font-size: 13px; 
     color: {accent_color};
     background: {accent_bg}; 
-    padding: 8px 16px; 
+    padding: 7px 14px; 
     -webkit-border-radius: 20px;
     border-radius: 20px; 
     line-height: 1.4;
-    border: 1px solid {accent_color}22;
+    border: 1px solid {accent_color}1F;
   }}
 
   /* 着装建议 - 优化视觉层次 */
@@ -1195,17 +1192,17 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border-radius: 12px;
     padding: 16px; 
     margin-top: 12px; 
-    border: 1px solid {accent_color}22;
+    border: 1px solid {accent_color}1F;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }}
   .clothing-brief {{ 
-    font-size: 14px; 
+    font-size: 13px; 
     color: {accent_color}; 
     line-height: 1.6; 
     font-weight: 700; 
   }}
   .clothing-detail {{ 
-    font-size: 13px; 
+    font-size: 12px; 
     color: #6B7280; 
     margin-top: 6px; 
     line-height: 1.7; 
@@ -1215,108 +1212,10 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .footer {{
     text-align: center; 
     padding: 20px 24px;
-    font-size: 14px; 
+    font-size: 13px; 
     color: #9CA3AF; 
     line-height: 1.6; 
     border-top: 1px solid #E5E7EB;
-  }}
-
-  /* ============================================
-   * 响应式设计 - 移动端优化
-   * ============================================ */
-  /* 大屏手机 / 小平板（如 iPhone 14 Pro Max） */
-  @media screen and (max-width: 600px) {{
-    body {{
-      padding: 10px;
-    }}
-
-    .wrap {{
-      -webkit-border-radius: 12px;
-      border-radius: 12px;
-    }}
-
-    .topbar {{
-      padding: 16px 20px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }}
-    .topbar-title {{
-      flex: 1 1 auto;
-      min-width: 0;
-    }}
-    .topbar-right {{
-      text-align: right;
-      flex: 0 0 auto;
-      white-space: nowrap;
-    }}
-
-    .hero {{
-      padding: 24px 20px 20px;
-    }}
-    .hero-top {{
-      flex-direction: row;
-      align-items: center;
-      gap: 16px;
-    }}
-    .hero-icon {{
-      flex-shrink: 0;
-    }}
-    .hero-info {{
-      min-width: 0;
-      flex: 1 1 auto;
-    }}
-    .hero-temp {{
-      white-space: nowrap;
-      line-height: 1.05;
-    }}
-    .hero-tags {{
-      gap: 8px;
-      margin-top: 14px;
-    }}
-    .hero-keypoint {{
-      margin-top: 16px;
-      padding: 14px;
-    }}
-
-    .section-label {{
-      padding: 20px 20px 10px;
-    }}
-
-    .card-container {{
-      padding: 0 16px 20px;
-      gap: 12px;
-    }}
-    .card {{
-      padding: 15px;
-      gap: 10px;
-    }}
-    .card-main {{
-      gap: 10px;
-    }}
-    .card-right {{
-      gap: 6px 8px;
-    }}
-
-    .info-section {{
-      padding: 12px 20px;
-    }}
-    .info-row {{
-      padding: 6px 20px;
-    }}
-
-    .life-grid {{
-      gap: 10px;
-    }}
-
-    .clothing {{
-      padding: 14px;
-    }}
-
-    .footer {{
-      padding: 16px 20px;
-    }}
   }}
 
 @media print {{
