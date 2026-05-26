@@ -1,12 +1,4 @@
-"""
-天气邮件 HTML 生成器 - UI 优化版
-优化内容：
-1. 响应式设计：添加媒体查询，移动端适配
-2. 邮件客户端兼容：MSO 条件注释，表格降级方案
-3. 可访问性：ARIA 标签，对比度优化
-4. 视觉层次：增强卡片阴影，优化间距
-5. 字体降级：移除 Google Fonts 依赖，强化系统字体栈
-"""
+"""天气邮件 HTML 生成器。"""
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -14,13 +6,12 @@ from typing import Any, Optional
 BEIJING_TZ = timezone(timedelta(hours=8))
 
 # ─────────────────────────────────────────────────────────────
-#  天气主题配色（优化对比度版本）
-#  调整：确保所有文字与背景对比度 ≥ 4.5:1 (WCAG AA)
+#  天气主题配色
 # ─────────────────────────────────────────────────────────────
 COLOR_THEME = {
     # 晴 — 提高对比度
     "sunny": {
-        "primary": "#3A9BD9",      # 加深以通过对比度
+        "primary": "#3A9BD9",
         "bg": "#F0F7FE",
         "gradient": "#6BB8E6",
         "text": "#1A365D",          # 深色文字确保对比度
@@ -53,63 +44,54 @@ COLOR_THEME = {
         "gradient": "#73AAC0",
         "text": "#1E3A5F",
     },
-    # 中雨/大雨
     "rainy_deep": {
         "primary": "#3A708A",
         "bg": "#E3ECF2",
         "gradient": "#5A95A8",
         "text": "#1A365D",
     },
-    # 小雪
     "snow": {
         "primary": "#4E8FB5",
         "bg": "#F0F6FC",
         "gradient": "#7DB2C6",
         "text": "#1E3A5F",
     },
-    # 大雪
     "snow_deep": {
         "primary": "#3D6F8A",
         "bg": "#E8F0F7",
         "gradient": "#6A9FB8",
         "text": "#1A365D",
     },
-    # 雾
     "fog": {
         "primary": "#7A8A94",
         "bg": "#F5F7F8",
         "gradient": "#A2B0B8",
         "text": "#2D3748",
     },
-    # 浓雾
     "fog_deep": {
         "primary": "#6B7A82",
         "bg": "#F0F2F4",
         "gradient": "#94A2AA",
         "text": "#2D3748",
     },
-    # 风
     "wind": {
         "primary": "#4E8A8A",
         "bg": "#F0F7F7",
         "gradient": "#7DB8B8",
         "text": "#1A3F3F",
     },
-    # 强风
     "wind_deep": {
         "primary": "#3D6F6F",
         "bg": "#E8F2F2",
         "gradient": "#6A9A9A",
         "text": "#1A3F3F",
     },
-    # 雷暴
     "thunder": {
         "primary": "#5E6490",
         "bg": "#F2F3F7",
         "gradient": "#868CB0",
         "text": "#2D1F4A",
     },
-    # 强雷暴
     "thunder_deep": {
         "primary": "#4E546E",
         "bg": "#EBEDF5",
@@ -193,7 +175,7 @@ def _theme_variant_from_text(text: str, family: str) -> str:
 
 def _get_weather_theme(slots: dict, any_rain: bool, temp_max: float, 
                        target_cast: Optional[dict] = None, hero_weather: str = "") -> dict:
-    """根据整天天气选择配色主题（优化版：返回包含 text 颜色的完整主题）"""
+    """根据整天天气选择配色主题。"""
     if temp_max >= 35:
         return COLOR_THEME["extreme"]
 
@@ -798,7 +780,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     # ---- 卡片渲染 ----
     def _slot_html(item: Optional[dict], label: str, is_highlight: bool = False) -> str:
-        """渲染单个时段卡片（优化版：左图标温度 + 右侧详情）"""
+        """渲染单个时段卡片。"""
         if not item:
             return f"""
         <div class="card" style="opacity:.4; text-align:center; vertical-align:middle;">
@@ -869,15 +851,10 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 <title>{mode_title} - {city}</title>
 <style>
   /* 
-   * 优化说明：
-   * 1. 移除 Google Fonts 依赖，使用系统字体栈
-   * 2. 添加媒体查询实现移动端适配
-   * 3. 增强对比度符合 WCAG AA 标准
-   * 4. 优化卡片间距和视觉层次
-   * 5. 添加 MSO 条件注释支持 Outlook
+   * 邮件客户端兼容与系统字体栈
    */
   
-  /* 系统字体栈 - 邮件客户端友好 */
+  /* 系统字体栈 */
   @font-face {{
     font-family: 'Inter';
     font-style: normal;
@@ -940,7 +917,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     margin-top: 2px; 
   }}
 
-  /* Hero 概览 - 增强视觉冲击 */
+  /* Hero 概览 */
   .hero {{
     padding: 32px 24px 24px; 
     margin: 0;
@@ -1001,7 +978,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border: 1px solid {accent_color}33;
   }}
 
-  /* 关键点 - 增强可读性 */
+  /* 关键点 */
   .hero-keypoint {{
     margin-top: 20px; 
     padding: 16px;
@@ -1185,7 +1162,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border: 1px solid {accent_color}1F;
   }}
 
-  /* 着装建议 - 优化视觉层次 */
+  /* 着装建议 */
   .clothing {{
     background: #fff;
     -webkit-border-radius: 12px;
@@ -1231,7 +1208,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 </style>
 <!--[if mso]>
 <style>
-  /* Outlook 专用样式 */
+  /* Outlook 样式 */
   .card {{
     background: #fff;
     -webkit-border-radius: 14px;
