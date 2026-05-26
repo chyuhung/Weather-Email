@@ -1187,6 +1187,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   @media screen and (max-width: 600px) {{
     body {{
       padding: 10px;
+      font-size: 14px;
     }}
 
     .wrap {{
@@ -1196,45 +1197,103 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     .topbar {{
       padding: 16px 20px;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }}
     .topbar-title {{
       font-size: 16px;
+      flex: 1 1 auto;
+      min-width: 0;
     }}
     .topbar-right {{
-      text-align: left;
+      text-align: right;
       font-size: 13px;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }}
+    .topbar-date {{
+      font-size: 13px;
+    }}
+    .topbar-city {{
+      font-size: 12px;
     }}
 
     .hero {{
       padding: 24px 20px 20px;
     }}
     .hero-top {{
-      flex-direction: column;
-      align-items: flex-start;
+      flex-direction: row;
+      align-items: center;
       gap: 16px;
     }}
     .hero-icon {{
-      font-size: 48px;
+      font-size: 50px;
+      flex-shrink: 0;
+    }}
+    .hero-info {{
+      min-width: 0;
+      flex: 1 1 auto;
     }}
     .hero-temp {{
-      font-size: 42px;
+      font-size: 44px;
+      white-space: nowrap;
+      line-height: 1.05;
     }}
     .hero-temp .night {{
-      font-size: 24px;
+      font-size: 26px;
     }}
     .hero-weather {{
       font-size: 15px;
+    }}
+    .hero-tags {{
+      gap: 8px;
+      margin-top: 14px;
     }}
     .hero-tag {{
       font-size: 12px;
       padding: 5px 12px;
     }}
+    .hero-keypoint {{
+      margin-top: 16px;
+      padding: 14px;
+    }}
+    .hero-keypoint-text {{
+      font-size: 13px;
+      line-height: 1.65;
+    }}
 
     .section-label {{
       padding: 20px 20px 10px;
+      font-size: 12px;
+    }}
+
+    .card-container {{
+      padding: 0 16px 20px;
+      gap: 12px;
+    }}
+    .card {{
+      padding: 15px;
+      gap: 7px;
+    }}
+    .card-label {{
+      font-size: 13px;
+    }}
+    .card-main {{
+      gap: 10px;
+    }}
+    .big-icon {{
+      font-size: 32px;
+    }}
+    .big-temp {{
+      font-size: 24px;
+    }}
+    .card-sub {{
+      font-size: 12px;
+      gap: 4px 8px;
+    }}
+    .slot-precip {{
       font-size: 12px;
     }}
 
@@ -1244,6 +1303,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     .info-row {{
       padding: 6px 20px;
       font-size: 12px;
+    }}
+    .info-label {{
+      font-size: 13px;
+    }}
+    .info-content {{
+      font-size: 13px;
     }}
 
     .life-grid {{
@@ -1256,6 +1321,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     .clothing {{
       padding: 14px;
+    }}
+    .clothing-brief {{
+      font-size: 13px;
+    }}
+    .clothing-detail {{
+      font-size: 12px;
     }}
 
     .footer {{
