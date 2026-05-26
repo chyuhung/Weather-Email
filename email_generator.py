@@ -1023,12 +1023,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
   /* 分段天气卡片 - 纵向单列（所有屏幕尺寸） */
   .card-container {{
-    padding: 0 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 16px 20px;
     max-width: 480px;
     margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    box-sizing: border-box;
   }}
   .card {{
     background: #fff;
@@ -1040,9 +1041,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     transition: all .2s ease;
     display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box;
@@ -1055,7 +1056,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .card-label {{
     font-size: 14px; 
     color: {accent_color}; 
-    margin-bottom: 12px;
+    margin-bottom: 0;
     letter-spacing: 1.5px; 
     font-weight: 700; 
     text-transform: uppercase;
@@ -1067,17 +1068,21 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     border-radius: 10px;
     font-size: 12px; 
     padding: 4px 10px; 
-    margin-bottom: 8px;
-    display: inline-block; 
+    margin: 0;
+    display: inline-flex; 
+    align-items: center;
     font-weight: 600; 
+    flex: 0 0 auto;
+    white-space: nowrap;
   }}
   .card-main {{ 
     display: flex; 
-    flex-direction: column; 
+    flex-direction: row; 
     align-items: center; 
-    gap: 8px; 
+    gap: 12px; 
     min-width: 0;
     overflow: hidden;
+    flex-wrap: nowrap;
   }}
   .big-icon {{ 
     font-size: 32px; 
@@ -1095,8 +1100,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .card-sub {{ 
     font-size: 13px; 
     color: #6B7280; 
-    margin-top: 10px; 
+    margin-top: 0; 
     line-height: 1.5; 
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    align-items: center;
   }}
 
   /* 信息区域 */
@@ -1178,12 +1188,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     body {{
       padding: 10px;
     }}
-    
+
     .wrap {{
       -webkit-border-radius: 12px;
-    border-radius: 12px;
+      border-radius: 12px;
     }}
-    
+
     .topbar {{
       padding: 16px 20px;
       flex-direction: column;
@@ -1197,7 +1207,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       text-align: left;
       font-size: 13px;
     }}
-    
+
     .hero {{
       padding: 24px 20px 20px;
     }}
@@ -1222,86 +1232,12 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       font-size: 12px;
       padding: 5px 12px;
     }}
-    
+
     .section-label {{
       padding: 20px 20px 10px;
       font-size: 12px;
     }}
-    
-    /* 卡片单列纵向排布 - 移动端适配 */
-    .card-container {{
-      padding: 0 16px 20px;
-      overflow: hidden;
-    }}
-  .card {{
-    background: #fff;
-    -webkit-border-radius: 14px;
-    border-radius: 14px;
-    padding: 16px;
-    text-align: left;
-    border: 1px solid {accent_color}22;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    transition: all .2s ease;
-    display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-  }}
-    .card:last-child {{
-      margin-bottom: 0;
-    }}
-    .card-label {{
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 56px;
-      font-size: 14px;
-      font-weight: 600;
-      color: {accent_color};
-      margin-bottom: 0;
-      line-height: 1.4;
-    }}
-    .card-main {{
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 0;
-    }}
-    .big-icon {{
-      font-size: 36px;
-      flex-shrink: 0;
-      line-height: 1;
-    }}
-    .big-temp {{
-      font-size: 26px;
-      font-weight: 700;
-      white-space: nowrap;
-      flex-shrink: 0;
-      color: {text_color};
-      line-height: 1.2;
-    }}
-    .card-sub {{
-      margin-top: 0;
-      font-size: 13px;
-      color: #6B7280;
-      line-height: 1.5;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }}
-    .slot-precip {{
-      display: inline-flex;
-      align-items: center;
-      margin-left: 0;
-      margin-top: 4px;
-      font-size: 12px;
-    }}
-    
+
     .info-section {{
       padding: 12px 20px;
     }}
@@ -1309,27 +1245,26 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       padding: 6px 20px;
       font-size: 12px;
     }}
-    
+
     .life-grid {{
-      gap: 8px;
+      gap: 10px;
     }}
     .life-tag {{
       font-size: 12px;
       padding: 6px 12px;
     }}
-    
+
     .clothing {{
       padding: 14px;
     }}
-    
+
     .footer {{
       padding: 16px 20px;
-      font-size: 11px;
+      font-size: 12px;
     }}
   }}
-  
-  /* 打印样式 */
-  @media print {{
+
+@media print {{
     body {{
       background: #fff;
       padding: 0;
@@ -1353,9 +1288,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     transition: all .2s ease;
     display: flex !important;
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box;
