@@ -798,15 +798,15 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
 
     # ---- 卡片渲染 ----
     def _slot_html(item: Optional[dict], label: str, is_highlight: bool = False) -> str:
-        """渲染单个时段卡片（优化版：更好的间距和可读性）"""
+        """渲染单个时段卡片（优化版：左图标温度 + 右侧详情）"""
         if not item:
             return f"""
-        <td class="card" style="opacity:.4; text-align:center; vertical-align:middle;">
+        <div class="card" style="opacity:.4; text-align:center; vertical-align:middle;">
             <div class="card-label">{label}</div>
             <div class="card-main">
                 <span class="empty-temp">暂无数据</span>
             </div>
-        </td>"""
+        </div>"""
 
         sky = item.get("skycon", item.get("weather", ""))
         icon = _sky_icon(sky)
@@ -815,6 +815,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         t_max = item.get("temp_max")
         wd = item.get("wind_direction", "—")
         wp = item.get("wind_power", "—")
+        wind_speed = item.get("wind_speed")
         humid = item.get("humidity")
         precip_prob = item.get("precip_probability", 0)
         is_rain_slot = item.get("has_rain", False)
@@ -826,6 +827,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         else:
             temp_str = "?°"
 
+        wind_speed_html = ""
+        if wind_speed is not None and wind_speed not in ("N/A", "", None):
+            try:
+                wind_speed_html = f'<span class="card-meta">{float(wind_speed):.1f}m/s</span>'
+            except (ValueError, TypeError):
+                pass
+
         precip_html = ""
         if precip_prob and float(precip_prob) > 0:
             precip_html = f'<div class="slot-precip">🌧️ {int(float(precip_prob))}%</div>'
@@ -833,22 +841,31 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
         humid_html = ""
         if humid is not None and humid not in ("N/A", "", None):
             try:
-                humid_html = f'<span>💧{int(float(humid))}%</span>'
+                humid_html = f'<span class="card-meta">💧{int(float(humid))}%</span>'
             except (ValueError, TypeError):
                 pass
 
         rainy_class = " rainy" if is_rain_slot else ""
         highlight_class = " highlight" if is_highlight else ""
+        wind_html = f'<span class="card-meta">风 {wd} {wp}级</span>'
 
         return f"""
         <div class="card{rainy_class}{highlight_class}">
             <div class="card-label">{label}</div>
-            {precip_html}
             <div class="card-main">
-                <span class="big-icon">{icon}</span>
-                <span class="big-temp">{temp_str}</span>
+                <div class="card-left">
+                    <span class="big-icon">{icon}</span>
+                    <span class="big-temp">{temp_str}</span>
+                </div>
+                <div class="card-right">
+                    {precip_html}
+                    <div class="card-sub">
+                        {wind_html}
+                        {wind_speed_html}
+                        {humid_html}
+                    </div>
+                </div>
             </div>
-            <div class="card-sub">{wd} {wp}级 {humid_html}</div>
         </div>"""
 
     # ======================== 组装优化的 HTML ========================
@@ -1043,7 +1060,7 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     display: flex !important;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box;
@@ -1056,33 +1073,38 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   .card-label {{
     font-size: 14px; 
     color: {accent_color}; 
-    margin-bottom: 0;
-    letter-spacing: 1.5px; 
+    margin: 0;
+    letter-spacing: 1.2px; 
     font-weight: 700; 
     text-transform: uppercase;
-  }}
-  .slot-precip {{
-    background: {accent_color}11; 
-    color: {accent_color}; 
-    -webkit-border-radius: 10px;
-    border-radius: 10px;
-    font-size: 12px; 
-    padding: 4px 10px; 
-    margin: 0;
-    display: inline-flex; 
-    align-items: center;
-    font-weight: 600; 
-    flex: 0 0 auto;
-    white-space: nowrap;
+    text-align: center;
   }}
   .card-main {{ 
     display: flex; 
     flex-direction: row; 
     align-items: center; 
+    justify-content: space-between;
     gap: 12px; 
     min-width: 0;
     overflow: hidden;
     flex-wrap: nowrap;
+  }}
+  .card-left {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 0 0 auto;
+  }}
+  .card-right {{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    margin-left: auto;
   }}
   .big-icon {{ 
     font-size: 32px; 
@@ -1107,8 +1129,27 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     flex-wrap: wrap;
     gap: 4px 10px;
     align-items: center;
+    justify-content: flex-end;
+    text-align: right;
   }}
-
+  .card-meta {{
+    white-space: nowrap;
+  }}
+  .slot-precip {{
+    background: {accent_color}11; 
+    color: {accent_color}; 
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    font-size: 12px; 
+    padding: 4px 10px; 
+    margin: 0;
+    display: inline-flex; 
+    align-items: center;
+    font-weight: 600; 
+    flex: 0 0 auto;
+    white-space: nowrap;
+    align-self: flex-end;
+  }}
   /* 信息区域 */
   .info-section {{
     padding: 16px 24px;
@@ -1187,7 +1228,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   @media screen and (max-width: 600px) {{
     body {{
       padding: 10px;
-      font-size: 14px;
     }}
 
     .wrap {{
@@ -1203,21 +1243,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       gap: 12px;
     }}
     .topbar-title {{
-      font-size: 16px;
       flex: 1 1 auto;
       min-width: 0;
     }}
     .topbar-right {{
       text-align: right;
-      font-size: 13px;
       flex: 0 0 auto;
       white-space: nowrap;
-    }}
-    .topbar-date {{
-      font-size: 13px;
-    }}
-    .topbar-city {{
-      font-size: 12px;
     }}
 
     .hero {{
@@ -1229,7 +1261,6 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       gap: 16px;
     }}
     .hero-icon {{
-      font-size: 50px;
       flex-shrink: 0;
     }}
     .hero-info {{
@@ -1237,36 +1268,20 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
       flex: 1 1 auto;
     }}
     .hero-temp {{
-      font-size: 44px;
       white-space: nowrap;
       line-height: 1.05;
-    }}
-    .hero-temp .night {{
-      font-size: 26px;
-    }}
-    .hero-weather {{
-      font-size: 15px;
     }}
     .hero-tags {{
       gap: 8px;
       margin-top: 14px;
     }}
-    .hero-tag {{
-      font-size: 12px;
-      padding: 5px 12px;
-    }}
     .hero-keypoint {{
       margin-top: 16px;
       padding: 14px;
     }}
-    .hero-keypoint-text {{
-      font-size: 13px;
-      line-height: 1.65;
-    }}
 
     .section-label {{
       padding: 20px 20px 10px;
-      font-size: 12px;
     }}
 
     .card-container {{
@@ -1275,26 +1290,13 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     }}
     .card {{
       padding: 15px;
-      gap: 7px;
-    }}
-    .card-label {{
-      font-size: 13px;
+      gap: 10px;
     }}
     .card-main {{
       gap: 10px;
     }}
-    .big-icon {{
-      font-size: 32px;
-    }}
-    .big-temp {{
-      font-size: 24px;
-    }}
-    .card-sub {{
-      font-size: 12px;
-      gap: 4px 8px;
-    }}
-    .slot-precip {{
-      font-size: 12px;
+    .card-right {{
+      gap: 6px 8px;
     }}
 
     .info-section {{
@@ -1302,36 +1304,18 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
     }}
     .info-row {{
       padding: 6px 20px;
-      font-size: 12px;
-    }}
-    .info-label {{
-      font-size: 13px;
-    }}
-    .info-content {{
-      font-size: 13px;
     }}
 
     .life-grid {{
       gap: 10px;
     }}
-    .life-tag {{
-      font-size: 12px;
-      padding: 6px 12px;
-    }}
 
     .clothing {{
       padding: 14px;
     }}
-    .clothing-brief {{
-      font-size: 13px;
-    }}
-    .clothing-detail {{
-      font-size: 12px;
-    }}
 
     .footer {{
       padding: 16px 20px;
-      font-size: 12px;
     }}
   }}
 
@@ -1409,9 +1393,9 @@ def generate_html(weather: dict[str, Any], mode: str = "evening") -> tuple[str, 
   <!-- 分时段预报 -->
   <div class="section-label" role="heading" aria-level="2">⏰ 分时段预报</div>
   <div class="card-container">
-        {_slot_html(slots.get("morning"), '\u4E0A\u5348', is_highlight=(mode == "morning"))}
-        {_slot_html(slots.get("afternoon"), '\u4E0B\u5348')}
-        {_slot_html(slots.get("night"), '\u665A\u95F4')}
+        {_slot_html(slots.get("morning"), '上午 06:00–12:00', is_highlight=(mode == "morning"))}
+        {_slot_html(slots.get("afternoon"), '下午 12:00–18:00')}
+        {_slot_html(slots.get("night"), '晚上 18:00–24:00')}
   </div>
 
   <!-- 空气质量 -->

@@ -117,6 +117,17 @@ def build_weather(spec: dict[str, Any]) -> dict[str, Any]:
         ]
     }
 
+    daily_aqi = {
+        "aqi": [
+            {"avg": {"chn": spec.get("aqi", 42)}},
+            {"avg": {"chn": spec.get("tomorrow_aqi", spec.get("aqi", 42))}},
+        ],
+        "pm25": [
+            {"avg": spec.get("pm25", 18)},
+            {"avg": spec.get("tomorrow_pm25", spec.get("pm25", 18))},
+        ],
+    }
+
     return {
         "success": True,
         "city": spec["city"],
@@ -125,7 +136,7 @@ def build_weather(spec: dict[str, Any]) -> dict[str, Any]:
         "hourly_forecast": build_hourly(day, spec["periods"]),
         "forecast_keypoint": spec["forecast_keypoint"],
         "hourly_description": spec["hourly_description"],
-        "daily_aqi": spec.get("daily_aqi"),
+        "daily_aqi": daily_aqi,
         "source": "caiyun",
         "error": None,
     }
@@ -135,7 +146,7 @@ SCENARIOS: list[dict[str, Any]] = [
     {
         "theme_key": "sunny",
         "title": "晴天",
-        "city": "北京 · 晴天",
+        "city": "北京市海淀区",
         "live_weather": "晴",
         "live_skycon": "CLEAR_DAY",
         "live_temp": 25,
@@ -157,7 +168,7 @@ SCENARIOS: list[dict[str, Any]] = [
     {
         "theme_key": "haze",
         "title": "晴间多云",
-        "city": "北京 · 晴间多云",
+        "city": "北京市海淀区",
         "live_weather": "晴间多云",
         "live_skycon": "PARTLY_CLOUDY_DAY",
         "live_temp": 24,
@@ -179,7 +190,7 @@ SCENARIOS: list[dict[str, Any]] = [
     {
         "theme_key": "cloudy_light",
         "title": "多云",
-        "city": "北京 · 多云",
+        "city": "北京市海淀区",
         "live_weather": "多云",
         "live_skycon": "PARTLY_CLOUDY_DAY",
         "live_temp": 23,
