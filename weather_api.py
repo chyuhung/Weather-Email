@@ -128,8 +128,16 @@ class CaiyunAPI:
             else:
                 city_name = city or province
 
-            # 组装地名，去除多余空格
-            return f"{province} {city_name} {district}".strip().replace("  ", " ")
+            # 直辖市的 city 往往为空或与 province 相同，避免重复显示“重庆市重庆市”
+            parts = []
+            if province:
+                parts.append(province)
+            if city_name and city_name != province:
+                parts.append(city_name)
+            if district:
+                parts.append(district)
+
+            return " ".join(parts)
         except Exception:
             return None
 
